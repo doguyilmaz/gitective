@@ -23,6 +23,19 @@ export interface FileBlame {
   lines: BlameLine[];
 }
 
+export interface LineBlame {
+  line: BlameLine;
+  commit: BlameCommit;
+}
+
+export function lineBlameAt(blame: FileBlame, line: number): LineBlame | undefined {
+  const direct = blame.lines[line - 1];
+  const entry = direct?.line === line ? direct : blame.lines.find((l) => l.line === line);
+  if (!entry) return undefined;
+  const commit = blame.commits.get(entry.sha);
+  return commit ? { line: entry, commit } : undefined;
+}
+
 const ENTRY_RE = /^([0-9a-f]{40}) (\d+) (\d+)(?: \d+)?$/;
 
 // git C-quotes paths containing special characters

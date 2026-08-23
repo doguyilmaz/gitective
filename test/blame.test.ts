@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { parsePorcelain, UNCOMMITTED_SHA } from "../src/core/blame";
+import { lineBlameAt, parsePorcelain, UNCOMMITTED_SHA } from "../src/core/blame";
 
 const SHA_A = "a".repeat(40);
 const SHA_B = "b".repeat(40);
@@ -117,5 +117,19 @@ describe("parsePorcelain", () => {
     const blame = parsePorcelain("");
     expect(blame.lines).toEqual([]);
     expect(blame.commits.size).toBe(0);
+  });
+});
+
+describe("lineBlameAt", () => {
+  test("returns line and commit for a 1-based line", () => {
+    const blame = parsePorcelain(interleaved);
+    expect(lineBlameAt(blame, 2)?.commit.author).toBe("Bob");
+    expect(lineBlameAt(blame, 2)?.line.origLine).toBe(2);
+  });
+
+  test("out of range yields undefined", () => {
+    const blame = parsePorcelain(interleaved);
+    expect(lineBlameAt(blame, 99)).toBeUndefined();
+    expect(lineBlameAt(blame, 0)).toBeUndefined();
   });
 });

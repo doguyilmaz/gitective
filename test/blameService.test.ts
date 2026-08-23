@@ -36,7 +36,7 @@ describe("BlameService working blame", () => {
   test("blames committed contents", async () => {
     const { repo, sha1, sha2 } = await repoWithHistory();
     const contents = await readFile(join(repo, FILE), "utf8");
-    const blame = await new BlameService().getBlame(req(repo, { contents }));
+    const blame = await new BlameService().getBlame(req(repo, { contents: () => contents }));
     expect(blame).toBeDefined();
     expect(blame?.lines.map((l) => l.sha)).toEqual([sha1, sha2, sha1]);
     expect(blame?.commits.get(sha2)?.author).toBe("Bob");
@@ -46,7 +46,7 @@ describe("BlameService working blame", () => {
   test("dirty buffer lines show as uncommitted, rest keep their commits", async () => {
     const { repo, sha1 } = await repoWithHistory();
     const dirty = "line one\nline two CHANGED\nline three EDITED\n";
-    const blame = await new BlameService().getBlame(req(repo, { contents: dirty }));
+    const blame = await new BlameService().getBlame(req(repo, { contents: () => dirty }));
     expect(blame?.lines[2]?.sha).toBe(UNCOMMITTED_SHA);
     expect(blame?.lines[0]?.sha).toBe(sha1);
     expect(blame?.commits.get(UNCOMMITTED_SHA)?.isUncommitted).toBe(true);
@@ -56,14 +56,14 @@ describe("BlameService working blame", () => {
     const repo = await makeRepo();
     await commitFile(repo, FILE, V1, "first");
     const blame = await new BlameService().getBlame(
-      req(repo, { relPath: "src/untracked.ts", contents: "hello\n" }),
+      req(repo, { relPath: "src/untracked.ts", contents: () => "hello\n" }),
     );
     expect(blame).toBeUndefined();
   });
 
   test("repo without commits yields undefined", async () => {
     const repo = await makeRepo();
-    const blame = await new BlameService().getBlame(req(repo, { contents: "x\n" }));
+    const blame = await new BlameService().getBlame(req(repo, { contents: () => "x\n" }));
     expect(blame).toBeUndefined();
   });
 });
@@ -88,8 +88,8 @@ describe("BlameService caching", () => {
     const { repo } = await repoWithHistory();
     const service = new BlameService();
     const contents = await readFile(join(repo, FILE), "utf8");
-    const first = await service.getBlame(req(repo, { contents }));
-    const second = await service.getBlame(req(repo, { contents }));
+    const first = await service.getBlame(req(repo, { contents: () => contents }));
+    const second = await service.getBlame(req(repo, { contents: () => contents }));
     expect(second).toBe(first!);
   });
 
@@ -97,8 +97,8 @@ describe("BlameService caching", () => {
     const { repo } = await repoWithHistory();
     const service = new BlameService();
     const contents = await readFile(join(repo, FILE), "utf8");
-    const first = await service.getBlame(req(repo, { contents }));
-    const second = await service.getBlame(req(repo, { contents, version: 2 }));
+    const first = await service.getBlame(req(repo, { contents: () => contents }));
+    const second = await service.getBlame(req(repo, { contents: () => contents, version: 2 }));
     expect(second).not.toBe(first!);
   });
 
@@ -106,9 +106,9 @@ describe("BlameService caching", () => {
     const { repo } = await repoWithHistory();
     const service = new BlameService();
     const contents = await readFile(join(repo, FILE), "utf8");
-    const first = await service.getBlame(req(repo, { contents }));
+    const first = await service.getBlame(req(repo, { contents: () => contents }));
     service.invalidateRepo(repo);
-    const second = await service.getBlame(req(repo, { contents }));
+    const second = await service.getBlame(req(repo, { contents: () => contents }));
     expect(second).not.toBe(first!);
   });
 
@@ -116,6 +116,6 @@ describe("BlameService caching", () => {
     const { repo } = await repoWithHistory();
     const service = new BlameService();
     const huge = "x".repeat(6 * 1024 * 1024);
-    expect(await service.getBlame(req(repo, { contents: huge }))).toBeUndefined();
+    expect(await service.getBlame(req(repo, { contents: () => huge }))).toBeUndefined();
   });
 });

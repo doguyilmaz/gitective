@@ -7,7 +7,7 @@ export interface BlameRequest {
   version: number;
   repoRoot: string;
   relPath: string;
-  contents?: string;
+  contents?: () => string;
   sha?: string;
 }
 
@@ -46,7 +46,8 @@ export class BlameService {
   }
 
   private async blame(req: BlameRequest, signal?: AbortSignal): Promise<FileBlame | undefined> {
-    if (req.contents !== undefined && req.contents.length > MAX_CONTENTS_BYTES) return undefined;
+    const contents = req.contents?.();
+    if (contents !== undefined && contents.length > MAX_CONTENTS_BYTES) return undefined;
     if (req.sha !== undefined && !isValidSha(req.sha)) {
       throw new Error(`invalid revision: ${req.sha}`);
     }
@@ -59,7 +60,7 @@ export class BlameService {
     try {
       const output = await runGit(args, {
         cwd: req.repoRoot,
-        stdin: req.contents,
+        stdin: contents,
         signal,
       });
       return parsePorcelain(output);
