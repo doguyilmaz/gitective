@@ -145,6 +145,7 @@
     "check": "tsc --noEmit",
     "lint": "eslint .",
     "test": "bun test",
+    "test:vsc": "bun run build && vscode-test",
     "vscode:prepublish": "bun esbuild.mjs --production",
     "package": "vsce package --allow-missing-repository"
   },
@@ -152,6 +153,8 @@
     "@types/bun": "^1.2.0",
     "@types/node": "^20.0.0",
     "@types/vscode": "1.85.0",
+    "@vscode/test-cli": "^0.0.15",
+    "@vscode/test-electron": "^3.1.0",
     "@vscode/vsce": "^3.0.0",
     "esbuild": "^0.25.0",
     "eslint": "^9.0.0",

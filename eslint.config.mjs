@@ -11,6 +11,6 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ["dist/", "out-test/", "node_modules/", "*.mjs"],
+    ignores: ["dist/", "out-test/", "node_modules/", "*.mjs", "test-vscode/", ".vscode-test/"],
   },
 );
