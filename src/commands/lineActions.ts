@@ -1,4 +1,4 @@
-import { posix } from "node:path";
+import { join } from "node:path";
 import * as vscode from "vscode";
 import { lineBlameAt, UNCOMMITTED_SHA } from "../core/blame";
 import { EMPTY_SHA } from "../core/revUri";
@@ -110,7 +110,7 @@ export async function compareWithPrevious(services: Services, arg: unknown): Pro
     await vscode.commands.executeCommand(
       "vscode.diff",
       toRevUri({ repoRoot, sha: head, relPath }),
-      vscode.Uri.file(posix.join(repoRoot, relPath)),
+      vscode.Uri.file(join(repoRoot, ...relPath.split("/"))),
       diffTitle(relPath, shortSha(head), "working"),
     );
     return;

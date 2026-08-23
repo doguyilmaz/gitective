@@ -84,6 +84,14 @@ export class BlameHud implements vscode.Disposable {
   }
 
   private async update(editor: vscode.TextEditor): Promise<void> {
+    try {
+      await this.updateUnsafe(editor);
+    } catch (error) {
+      log().error(`blame hud: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  private async updateUnsafe(editor: vscode.TextEditor): Promise<void> {
     const seq = ++this.seqCounter;
     this.updateSeq.set(editor, seq);
     const cfg = getConfig();
@@ -95,12 +103,7 @@ export class BlameHud implements vscode.Disposable {
     if (this.updateSeq.get(editor) !== seq) return;
     if (!ctx) return this.clear(editor, isActive);
 
-    let blame;
-    try {
-      blame = await this.services.blame.getBlame(ctx.req);
-    } catch (error) {
-      log().error(`blame hud: ${error instanceof Error ? error.message : String(error)}`);
-    }
+    const blame = await this.services.blame.getBlame(ctx.req);
     if (this.updateSeq.get(editor) !== seq || editor.document.version !== version) return;
 
     const found = blame && lineBlameAt(blame, editor.selection.active.line + 1);
