@@ -73,7 +73,10 @@ const STATUS_ICONS: Record<string, string> = {
 };
 
 export async function showCommitFiles(repoRoot: string, sha: string): Promise<void> {
-  const output = await runGit(["show", sha, "--format=", "--name-status"], { cwd: repoRoot });
+  // -m --first-parent: merge commits otherwise emit no name-status at all
+  const output = await runGit(["show", sha, "-m", "--first-parent", "--format=", "--name-status"], {
+    cwd: repoRoot,
+  });
   const changes = parseNameStatus(output);
   if (changes.length === 0) {
     void vscode.window.showInformationMessage("Whodunit: no file changes in this commit.");
