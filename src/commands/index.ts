@@ -1,7 +1,16 @@
 import * as vscode from "vscode";
 import { reportError } from "../log";
 import type { Services } from "../services";
-import { compareWithPrevious, copyMessage, copySha, openAtRevision } from "./lineActions";
+import { fileHistory } from "./history";
+import {
+  compareWithPrevious,
+  copyMessage,
+  copySha,
+  lineActions,
+  openAtRevision,
+  showCommit,
+} from "./lineActions";
+import { searchCommits } from "./search";
 
 type Handler = (services: Services, arg: unknown) => Promise<void>;
 
@@ -16,6 +25,10 @@ const handlers: Record<string, Handler> = {
   "whodunit.copyMessage": copyMessage,
   "whodunit.compareWithPrevious": compareWithPrevious,
   "whodunit.openAtRevision": openAtRevision,
+  "whodunit.showCommit": showCommit,
+  "whodunit.lineActions": lineActions,
+  "whodunit.fileHistory": fileHistory,
+  "whodunit.searchCommits": (services) => searchCommits(services),
   "whodunit.toggleInline": toggleInline,
 };
 

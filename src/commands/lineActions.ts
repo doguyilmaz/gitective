@@ -7,6 +7,8 @@ import { contextForDocument } from "../docContext";
 import { runGit } from "../git/run";
 import type { Services } from "../services";
 import { toRevUri } from "../uris";
+import { diffTitle, showCommitFiles } from "./commitPick";
+import { fileHistory } from "./history";
 
 export interface LineTarget {
   repoRoot: string;
@@ -18,7 +20,7 @@ export interface LineTarget {
   previousPath?: string;
 }
 
-function isLineTarget(arg: unknown): arg is LineTarget {
+export function isLineTarget(arg: unknown): arg is LineTarget {
   if (typeof arg !== "object" || arg === null) return false;
   const t = arg as Record<string, unknown>;
   return (
@@ -98,11 +100,6 @@ export async function copyMessage(services: Services, arg: unknown): Promise<voi
   flash(`Copied message of ${shortSha(target.sha)}`);
 }
 
-function diffTitle(relPath: string, left: string, right: string): string {
-  const name = posix.basename(relPath);
-  return `${name} (${left}) ↔ ${name} (${right})`;
-}
-
 export async function compareWithPrevious(services: Services, arg: unknown): Promise<void> {
   const target = await resolveTarget(services, arg);
   if (!target) return noBlame();
@@ -128,6 +125,48 @@ export async function compareWithPrevious(services: Services, arg: unknown): Pro
     toRevUri({ repoRoot, sha, relPath }),
     diffTitle(relPath, target.previousSha ? shortSha(target.previousSha) : "added", shortSha(sha)),
   );
+}
+
+export async function showCommit(services: Services, arg: unknown): Promise<void> {
+  const target = await resolveTarget(services, arg);
+  if (!target) return noBlame();
+  if (target.sha === UNCOMMITTED_SHA) {
+    void vscode.window.showInformationMessage("Whodunit: the line is uncommitted.");
+    return;
+  }
+  await showCommitFiles(target.repoRoot, target.sha);
+}
+
+export async function lineActions(services: Services, arg: unknown): Promise<void> {
+  const target = await resolveTarget(services, arg);
+  if (!target) return noBlame();
+
+  interface ActionItem extends vscode.QuickPickItem {
+    run: () => Promise<void>;
+  }
+  const uncommitted = target.sha === UNCOMMITTED_SHA;
+  const items: ActionItem[] = uncommitted
+    ? [
+        { label: "$(diff) Compare with HEAD", run: () => compareWithPrevious(services, target) },
+        { label: "$(history) File History", run: () => fileHistory(services, target) },
+      ]
+    : [
+        { label: "$(copy) Copy SHA", run: () => copySha(services, target) },
+        { label: "$(note) Copy Message", run: () => copyMessage(services, target) },
+        {
+          label: "$(diff) Compare with Previous",
+          run: () => compareWithPrevious(services, target),
+        },
+        { label: "$(go-to-file) Open at Revision", run: () => openAtRevision(services, target) },
+        { label: "$(git-commit) Show Commit", run: () => showCommit(services, target) },
+        { label: "$(history) File History", run: () => fileHistory(services, target) },
+      ];
+  const picked = await vscode.window.showQuickPick(items, {
+    placeHolder: uncommitted
+      ? `Line ${target.line} — uncommitted`
+      : `Line ${target.line} — ${shortSha(target.sha)}`,
+  });
+  if (picked) await picked.run();
 }
 
 export async function openAtRevision(services: Services, arg: unknown): Promise<void> {
