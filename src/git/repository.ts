@@ -36,13 +36,20 @@ async function discover(dir: string): Promise<RepoInfo | undefined> {
 export class RepoResolver {
   private cache = new Map<string, Promise<RepoInfo | undefined>>();
 
+  constructor(private readonly onDiscovered?: (info: RepoInfo) => void) {}
+
   repoForDir(dir: string): Promise<RepoInfo | undefined> {
     let cached = this.cache.get(dir);
     if (!cached) {
-      cached = discover(dir).catch((error) => {
-        this.cache.delete(dir);
-        throw error;
-      });
+      cached = discover(dir)
+        .then((info) => {
+          if (info) this.onDiscovered?.(info);
+          return info;
+        })
+        .catch((error) => {
+          this.cache.delete(dir);
+          throw error;
+        });
       this.cache.set(dir, cached);
     }
     return cached;
