@@ -85,6 +85,17 @@
         "category": "Whodunit"
       }
     ],
+    "menus": {
+      "commandPalette": [
+        { "command": "whodunit.copySha", "when": "editorIsOpen" },
+        { "command": "whodunit.copyMessage", "when": "editorIsOpen" },
+        { "command": "whodunit.compareWithPrevious", "when": "editorIsOpen" },
+        { "command": "whodunit.openAtRevision", "when": "editorIsOpen" },
+        { "command": "whodunit.showCommit", "when": "editorIsOpen" },
+        { "command": "whodunit.fileHistory", "when": "editorIsOpen" },
+        { "command": "whodunit.lineActions", "when": "editorIsOpen" }
+      ]
+    },
     "configuration": {
       "title": "Whodunit",
       "properties": {
@@ -163,5 +174,9 @@
   },
   "trustedDependencies": [
     "@vscode/vsce-sign"
-  ]
+  ],
+  "overrides": {
+    "serialize-javascript": "^7.0.5",
+    "diff": "^8.0.3"
+  }
 }
