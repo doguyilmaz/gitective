@@ -5,11 +5,18 @@ import { compareWithPrevious, copyMessage, copySha, openAtRevision } from "./lin
 
 type Handler = (services: Services, arg: unknown) => Promise<void>;
 
+async function toggleInline(): Promise<void> {
+  const config = vscode.workspace.getConfiguration("whodunit");
+  const current = config.get("inline.enabled", true);
+  await config.update("inline.enabled", !current, vscode.ConfigurationTarget.Global);
+}
+
 const handlers: Record<string, Handler> = {
   "whodunit.copySha": copySha,
   "whodunit.copyMessage": copyMessage,
   "whodunit.compareWithPrevious": compareWithPrevious,
   "whodunit.openAtRevision": openAtRevision,
+  "whodunit.toggleInline": toggleInline,
 };
 
 export function registerCommands(services: Services): vscode.Disposable[] {
