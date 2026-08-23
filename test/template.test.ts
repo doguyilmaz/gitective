@@ -24,6 +24,12 @@ describe("renderTemplate", () => {
     expect(renderTemplate("${author} ${nope}", values)).toBe("Alice ${nope}");
   });
 
+  test("inherited object keys are not tokens", () => {
+    expect(renderTemplate("${toString} ${constructor}", values)).toBe(
+      "${toString} ${constructor}",
+    );
+  });
+
   test("repeated tokens and empty format", () => {
     expect(renderTemplate("${sha}${sha}", values)).toBe("a1b2c3da1b2c3d");
     expect(renderTemplate("", values)).toBe("");

@@ -1,4 +1,4 @@
-import { UNCOMMITTED_SHA } from "./blame";
+import { isUncommittedSha } from "./blame";
 
 export function escapeMarkdown(text: string): string {
   return text.replace(/[\\`*_{}[\]()#+\-.!|<>]/g, "\\$&");
@@ -10,9 +10,9 @@ export function escapeCodicons(text: string): string {
 }
 
 export function isValidSha(text: string): boolean {
-  return /^[0-9a-f]{4,40}$/i.test(text);
+  return /^(?:[0-9a-f]{4,40}|[0-9a-f]{64})$/i.test(text);
 }
 
 export function shortSha(sha: string): string {
-  return sha === UNCOMMITTED_SHA ? "working" : sha.slice(0, 7);
+  return isUncommittedSha(sha) ? "working" : sha.slice(0, 7);
 }

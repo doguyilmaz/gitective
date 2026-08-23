@@ -53,4 +53,11 @@ describe("parseNameStatus", () => {
   test("ignores non-status noise", () => {
     expect(parseNameStatus("subject line\n\nM\ta.ts\n")).toEqual([{ status: "M", path: "a.ts" }]);
   });
+
+  test("unquotes C-quoted non-ascii paths", () => {
+    expect(parseNameStatus('M\t"caf\\303\\251.ts"\n')).toEqual([{ status: "M", path: "café.ts" }]);
+    expect(parseNameStatus('R100\t"\\303\\241.ts"\tb.ts\n')).toEqual([
+      { status: "R", path: "b.ts", oldPath: "á.ts" },
+    ]);
+  });
 });

@@ -1,4 +1,8 @@
+import { unquotePath } from "./blame";
+
 export const LOG_FORMAT = "%H%x1f%an%x1f%ae%x1f%at%x1f%s%x1e";
+
+const SHA_RE = /^[0-9a-f]{40}(?:[0-9a-f]{24})?$/;
 
 export interface FileChange {
   status: string;
@@ -23,7 +27,11 @@ export function parseNameStatus(output: string): FileChange[] {
     const match = STATUS_RE.exec(line);
     if (!match) continue;
     const [, status, first, second] = match as unknown as [string, string, string, string?];
-    changes.push(second ? { status, path: second, oldPath: first } : { status, path: first });
+    changes.push(
+      second
+        ? { status, path: unquotePath(second), oldPath: unquotePath(first) }
+        : { status, path: unquotePath(first) },
+    );
   }
   return changes;
 }
@@ -42,7 +50,7 @@ export function parseLogRecords(output: string): LogEntry[] {
       const previous = entries[entries.length - 1];
       if (changes.length > 0 && previous && !previous.changes) previous.changes = changes;
     }
-    if (fields.length !== 5 || !/^[0-9a-f]{40}$/.test(sha)) continue;
+    if (fields.length !== 5 || !SHA_RE.test(sha)) continue;
     entries.push({
       sha,
       author: fields[1] as string,

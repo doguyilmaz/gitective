@@ -9,7 +9,7 @@ export interface TemplateValues {
 
 export function renderTemplate(format: string, values: TemplateValues): string {
   return format.replace(/\$\{(\w+)\}/g, (match, key: string) =>
-    key in values ? values[key as keyof TemplateValues] : match,
+    Object.hasOwn(values, key) ? values[key as keyof TemplateValues] : match,
   );
 }
 

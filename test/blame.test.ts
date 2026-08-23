@@ -1,5 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { lineBlameAt, parsePorcelain, UNCOMMITTED_SHA } from "../src/core/blame";
+import {
+  isUncommittedSha,
+  lineBlameAt,
+  parsePorcelain,
+  UNCOMMITTED_SHA,
+  unquotePath,
+} from "../src/core/blame";
 
 const SHA_A = "a".repeat(40);
 const SHA_B = "b".repeat(40);
@@ -117,6 +123,45 @@ describe("parsePorcelain", () => {
     const blame = parsePorcelain("");
     expect(blame.lines).toEqual([]);
     expect(blame.commits.size).toBe(0);
+  });
+});
+
+describe("unquotePath", () => {
+  test("decodes octal escapes as utf-8 bytes, not code points", () => {
+    expect(unquotePath('"caf\\303\\251.ts"')).toBe("café.ts");
+    expect(unquotePath('"\\303\\274n\\303\\257code.ts"')).toBe("ünïcode.ts");
+  });
+
+  test("unquoted paths pass through", () => {
+    expect(unquotePath("plain/path.ts")).toBe("plain/path.ts");
+  });
+});
+
+describe("sha256 object format", () => {
+  const sha256 = "ab".repeat(32);
+
+  test("parses 64-hex entry lines", () => {
+    const input = [
+      `${sha256} 1 1 1`,
+      "author Alice",
+      "author-mail <alice@example.com>",
+      "author-time 1700000000",
+      "author-tz +0000",
+      "summary sha256 repo",
+      "filename app.ts",
+      "\tx",
+      "",
+    ].join("\n");
+    const blame = parsePorcelain(input);
+    expect(blame.lines[0]?.sha).toBe(sha256);
+    expect(blame.commits.get(sha256)?.author).toBe("Alice");
+  });
+
+  test("isUncommittedSha accepts 40- and 64-zero sentinels only", () => {
+    expect(isUncommittedSha(UNCOMMITTED_SHA)).toBe(true);
+    expect(isUncommittedSha("0".repeat(64))).toBe(true);
+    expect(isUncommittedSha("0".repeat(10))).toBe(false);
+    expect(isUncommittedSha(sha256)).toBe(false);
   });
 });
 

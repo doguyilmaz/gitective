@@ -30,9 +30,11 @@ describe("escapeCodicons", () => {
 });
 
 describe("isValidSha", () => {
-  test("accepts hex of length 4-40", () => {
+  test("accepts hex of length 4-40 and full sha256", () => {
     expect(isValidSha("a1b2")).toBe(true);
     expect(isValidSha("A".repeat(40))).toBe(true);
+    expect(isValidSha("a".repeat(64))).toBe(true);
+    expect(isValidSha("a".repeat(63))).toBe(false);
   });
 
   test("rejects garbage", () => {
