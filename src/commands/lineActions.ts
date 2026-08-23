@@ -106,7 +106,13 @@ export async function compareWithPrevious(services: Services, arg: unknown): Pro
   const { repoRoot, relPath, sha } = target;
 
   if (sha === UNCOMMITTED_SHA) {
-    const head = (await runGit(["rev-parse", "HEAD"], { cwd: repoRoot })).trim();
+    let head: string;
+    try {
+      head = (await runGit(["rev-parse", "HEAD"], { cwd: repoRoot })).trim();
+    } catch {
+      void vscode.window.showInformationMessage("Whodunit: the repository has no commits yet.");
+      return;
+    }
     await vscode.commands.executeCommand(
       "vscode.diff",
       toRevUri({ repoRoot, sha: head, relPath }),
