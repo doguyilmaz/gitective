@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { mkdtemp, mkdir, realpath } from "node:fs/promises";
+import { mkdtemp, mkdir, realpath, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { GitError, runGit } from "../src/git/run";
 import { relPath, RepoResolver } from "../src/git/repository";
-import { commitFile, makeRepo } from "./helpers";
+import { commitFile, git, makeRepo } from "./helpers";
 
 describe("runGit", () => {
   test("runs git and returns stdout", async () => {
@@ -58,6 +58,27 @@ describe("RepoResolver", () => {
     const dir = await realpath(await mkdtemp(join(tmpdir(), "whodunit-norepo-")));
     await mkdir(join(dir, "sub"));
     expect(await new RepoResolver().repoForDir(join(dir, "sub"))).toBeUndefined();
+  });
+
+  test("resolves symlinked directories to the real repo path", async () => {
+    const repo = await makeRepo();
+    await commitFile(repo, "src/a.ts", "x\n", "init");
+    const linkParent = await realpath(await mkdtemp(join(tmpdir(), "whodunit-link-")));
+    const link = join(linkParent, "link");
+    await symlink(repo, link);
+    const info = await new RepoResolver().repoForDir(join(link, "src"));
+    expect(info?.root).toBe(repo);
+    expect(info?.realDir).toBe(join(repo, "src"));
+    expect(relPath(info!.root, join(info!.realDir, "a.ts"))).toBe("src/a.ts");
+  });
+
+  test("expired negative results are re-probed", async () => {
+    const dir = await realpath(await mkdtemp(join(tmpdir(), "whodunit-late-")));
+    const resolver = new RepoResolver(undefined, 0);
+    expect(await resolver.repoForDir(dir)).toBeUndefined();
+    await git(dir, "init", "-qb", "main");
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    expect((await resolver.repoForDir(dir))?.root).toBe(dir);
   });
 
   test("caches by directory until invalidated", async () => {

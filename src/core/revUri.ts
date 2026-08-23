@@ -25,6 +25,10 @@ export function decodeRevQuery(query: string): RevRef | undefined {
     return undefined;
   }
   if (sha !== EMPTY_SHA && !isValidSha(sha)) return undefined;
-  if (relPath.startsWith("/") || relPath.split("/").includes("..")) return undefined;
+  if (!isSafeRelPath(relPath)) return undefined;
   return { repoRoot, sha, relPath };
+}
+
+export function isSafeRelPath(relPath: string): boolean {
+  return !relPath.startsWith("/") && !relPath.split("/").includes("..");
 }

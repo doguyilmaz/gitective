@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import * as vscode from "vscode";
-import { lineBlameAt, UNCOMMITTED_SHA } from "../core/blame";
-import { EMPTY_SHA } from "../core/revUri";
+import { isUncommittedSha, lineBlameAt } from "../core/blame";
+import { EMPTY_SHA, isSafeRelPath } from "../core/revUri";
 import { isValidSha, shortSha } from "../core/sanitize";
 import { contextForDocument } from "../docContext";
 import { runGit } from "../git/run";
@@ -26,10 +26,13 @@ export function isLineTarget(arg: unknown): arg is LineTarget {
   return (
     typeof t.repoRoot === "string" &&
     typeof t.relPath === "string" &&
+    isSafeRelPath(t.relPath) &&
     typeof t.sha === "string" &&
-    (t.sha === UNCOMMITTED_SHA || isValidSha(t.sha)) &&
+    (isUncommittedSha(t.sha) || isValidSha(t.sha)) &&
     typeof t.line === "number" &&
-    typeof t.origLine === "number"
+    typeof t.origLine === "number" &&
+    (t.previousSha === undefined || (typeof t.previousSha === "string" && isValidSha(t.previousSha))) &&
+    (t.previousPath === undefined || (typeof t.previousPath === "string" && isSafeRelPath(t.previousPath)))
   );
 }
 
@@ -78,7 +81,7 @@ function flash(message: string): void {
 export async function copySha(services: Services, arg: unknown): Promise<void> {
   const target = await resolveTarget(services, arg);
   if (!target) return noBlame();
-  if (target.sha === UNCOMMITTED_SHA) {
+  if (isUncommittedSha(target.sha)) {
     void vscode.window.showInformationMessage("Whodunit: the line is uncommitted.");
     return;
   }
@@ -89,7 +92,7 @@ export async function copySha(services: Services, arg: unknown): Promise<void> {
 export async function copyMessage(services: Services, arg: unknown): Promise<void> {
   const target = await resolveTarget(services, arg);
   if (!target) return noBlame();
-  if (target.sha === UNCOMMITTED_SHA) {
+  if (isUncommittedSha(target.sha)) {
     void vscode.window.showInformationMessage("Whodunit: the line is uncommitted.");
     return;
   }
@@ -105,7 +108,7 @@ export async function compareWithPrevious(services: Services, arg: unknown): Pro
   if (!target) return noBlame();
   const { repoRoot, relPath, sha } = target;
 
-  if (sha === UNCOMMITTED_SHA) {
+  if (isUncommittedSha(sha)) {
     let head: string;
     try {
       head = (await runGit(["rev-parse", "HEAD"], { cwd: repoRoot })).trim();
@@ -136,7 +139,7 @@ export async function compareWithPrevious(services: Services, arg: unknown): Pro
 export async function showCommit(services: Services, arg: unknown): Promise<void> {
   const target = await resolveTarget(services, arg);
   if (!target) return noBlame();
-  if (target.sha === UNCOMMITTED_SHA) {
+  if (isUncommittedSha(target.sha)) {
     void vscode.window.showInformationMessage("Whodunit: the line is uncommitted.");
     return;
   }
@@ -150,7 +153,7 @@ export async function lineActions(services: Services, arg: unknown): Promise<voi
   interface ActionItem extends vscode.QuickPickItem {
     run: () => Promise<void>;
   }
-  const uncommitted = target.sha === UNCOMMITTED_SHA;
+  const uncommitted = isUncommittedSha(target.sha);
   const items: ActionItem[] = uncommitted
     ? [
         { label: "$(diff) Compare with HEAD", run: () => compareWithPrevious(services, target) },
@@ -178,7 +181,7 @@ export async function lineActions(services: Services, arg: unknown): Promise<voi
 export async function openAtRevision(services: Services, arg: unknown): Promise<void> {
   const target = await resolveTarget(services, arg);
   if (!target) return noBlame();
-  if (target.sha === UNCOMMITTED_SHA) {
+  if (isUncommittedSha(target.sha)) {
     void vscode.window.showInformationMessage("Whodunit: the line is uncommitted.");
     return;
   }

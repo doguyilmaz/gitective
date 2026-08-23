@@ -1,4 +1,4 @@
-import { dirname } from "node:path";
+import { basename, dirname, join } from "node:path";
 import type * as vscode from "vscode";
 import { EMPTY_SHA } from "./core/revUri";
 import type { BlameRequest } from "./git/blameService";
@@ -26,7 +26,7 @@ export async function contextForDocument(
         key: doc.uri.toString(),
         version: doc.version,
         repoRoot: info.root,
-        relPath: relPath(info.root, doc.uri.fsPath),
+        relPath: relPath(info.root, join(info.realDir, basename(doc.uri.fsPath))),
         contents: () => doc.getText(),
       },
     };

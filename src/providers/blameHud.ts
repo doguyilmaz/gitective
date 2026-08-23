@@ -95,19 +95,21 @@ export class BlameHud implements vscode.Disposable {
     const seq = ++this.seqCounter;
     this.updateSeq.set(editor, seq);
     const cfg = getConfig();
-    const isActive = vscode.window.activeTextEditor === editor;
-    if (!cfg.inlineEnabled && !cfg.statusBarEnabled) return this.clear(editor, isActive);
+    // resolved at use time: a slow background update must not steal the
+    // status bar from the editor that became active during the awaits
+    const isActive = () => vscode.window.activeTextEditor === editor;
+    if (!cfg.inlineEnabled && !cfg.statusBarEnabled) return this.clear(editor, isActive());
 
     const version = editor.document.version;
     const ctx = await contextForDocument(editor.document, this.services.resolver);
     if (this.updateSeq.get(editor) !== seq) return;
-    if (!ctx) return this.clear(editor, isActive);
+    if (!ctx) return this.clear(editor, isActive());
 
     const blame = await this.services.blame.getBlame(ctx.req);
     if (this.updateSeq.get(editor) !== seq || editor.document.version !== version) return;
 
     const found = blame && lineBlameAt(blame, editor.selection.active.line + 1);
-    if (!found) return this.clear(editor, isActive);
+    if (!found) return this.clear(editor, isActive());
 
     const values = templateValuesFor(found.commit, {
       userEmail: ctx.userEmail,
@@ -127,7 +129,7 @@ export class BlameHud implements vscode.Disposable {
       editor.setDecorations(this.decoration, []);
     }
 
-    if (isActive) this.renderStatus(cfg, values, found);
+    if (isActive()) this.renderStatus(cfg, values, found);
   }
 
   private renderStatus(cfg: WhodunitConfig, values: TemplateValues, found: LineBlame): void {

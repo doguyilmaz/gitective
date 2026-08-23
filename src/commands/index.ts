@@ -14,10 +14,16 @@ import { searchCommits } from "./search";
 
 type Handler = (services: Services, arg: unknown) => Promise<void>;
 
+// write to the scope that currently defines the value, or the toggle is a no-op
 async function toggleInline(): Promise<void> {
   const config = vscode.workspace.getConfiguration("whodunit");
   const current = config.get("inline.enabled", true);
-  await config.update("inline.enabled", !current, vscode.ConfigurationTarget.Global);
+  const info = config.inspect<boolean>("inline.enabled");
+  const target =
+    info?.workspaceFolderValue !== undefined || info?.workspaceValue !== undefined
+      ? vscode.ConfigurationTarget.Workspace
+      : vscode.ConfigurationTarget.Global;
+  await config.update("inline.enabled", !current, target);
 }
 
 const handlers: Record<string, Handler> = {

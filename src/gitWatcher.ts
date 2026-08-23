@@ -25,7 +25,7 @@ async function resolveGitDir(root: string): Promise<string | undefined> {
 
 export class GitWatcher implements vscode.Disposable {
   private readonly roots = new Set<string>();
-  private readonly watchers = new Map<string, FSWatcher>();
+  private readonly watchers = new Map<string, FSWatcher[]>();
   private readonly timers = new Map<string, ReturnType<typeof setTimeout>>();
   private disposed = false;
 
@@ -37,42 +37,78 @@ export class GitWatcher implements vscode.Disposable {
     void this.start(root);
   }
 
-  private async start(root: string): Promise<void> {
-    const gitDir = await resolveGitDir(root);
-    if (!gitDir || this.disposed) return;
+  private notify(root: string): void {
+    const pending = this.timers.get(root);
+    if (pending) clearTimeout(pending);
+    this.timers.set(
+      root,
+      setTimeout(() => {
+        this.timers.delete(root);
+        this.onChange(root);
+      }, CHANGE_DEBOUNCE_MS),
+    );
+  }
+
+  // dropping the root on any failure lets the next repo discovery retry the watch
+  private dropRoot(root: string): void {
+    this.roots.delete(root);
+    const watchers = this.watchers.get(root);
+    this.watchers.delete(root);
+    for (const watcher of watchers ?? []) watcher.close();
+  }
+
+  private tryWatch(
+    root: string,
+    dir: string,
+    accepts: (filename: string) => boolean,
+  ): FSWatcher | undefined {
     try {
-      const watcher = watch(gitDir, (_event, filename) => {
-        if (filename === null || !WATCHED_FILES.has(filename)) return;
-        const pending = this.timers.get(root);
-        if (pending) clearTimeout(pending);
-        this.timers.set(
-          root,
-          setTimeout(() => {
-            this.timers.delete(root);
-            this.onChange(root);
-          }, CHANGE_DEBOUNCE_MS),
-        );
+      const watcher = watch(dir, (_event, filename) => {
+        if (filename !== null && accepts(filename)) this.notify(root);
       });
       watcher.on("error", (error) => {
         log().warn(`git watcher (${root}): ${error.message}`);
-        watcher.close();
-        this.watchers.delete(root);
+        this.dropRoot(root);
       });
-      if (this.disposed) {
-        watcher.close();
-        return;
-      }
-      this.watchers.set(root, watcher);
+      return watcher;
     } catch (error) {
       log().warn(`git watcher (${root}): ${error instanceof Error ? error.message : String(error)}`);
+      return undefined;
     }
+  }
+
+  private async start(root: string): Promise<void> {
+    const gitDir = await resolveGitDir(root);
+    if (!gitDir || this.disposed) {
+      this.roots.delete(root);
+      return;
+    }
+    const watchers: FSWatcher[] = [];
+    const main = this.tryWatch(root, gitDir, (name) => WATCHED_FILES.has(name));
+    if (!main) {
+      this.roots.delete(root);
+      return;
+    }
+    watchers.push(main);
+    // logs/HEAD is appended on every ref update, catching amends and
+    // branch moves that touch neither HEAD, index, nor packed-refs
+    const logs = this.tryWatch(root, join(gitDir, "logs"), (name) => name === "HEAD");
+    if (logs) watchers.push(logs);
+
+    if (this.disposed) {
+      for (const watcher of watchers) watcher.close();
+      return;
+    }
+    this.watchers.set(root, watchers);
   }
 
   dispose(): void {
     this.disposed = true;
     for (const timer of this.timers.values()) clearTimeout(timer);
     this.timers.clear();
-    for (const watcher of this.watchers.values()) watcher.close();
+    for (const watchers of this.watchers.values()) {
+      for (const watcher of watchers) watcher.close();
+    }
     this.watchers.clear();
     this.roots.clear();
   }

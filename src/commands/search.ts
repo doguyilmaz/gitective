@@ -34,8 +34,10 @@ async function queryCommits(repoRoot: string, value: string): Promise<LogEntry[]
   if (value.startsWith("@")) {
     const author = value.slice(1);
     if (!author) return parseLogRecords(await runGit(base, { cwd: repoRoot }));
+    // --author has no --fixed-strings equivalent, so neutralize regex metachars
+    const escaped = author.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     return parseLogRecords(
-      await runGit([...base, "--regexp-ignore-case", `--author=${author}`], { cwd: repoRoot }),
+      await runGit([...base, "--regexp-ignore-case", `--author=${escaped}`], { cwd: repoRoot }),
     );
   }
 

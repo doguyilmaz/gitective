@@ -37,6 +37,8 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration("whodunit")) hud.refresh();
     }),
+    // document versions restart on reopen, so a stale entry could match again
+    vscode.workspace.onDidCloseTextDocument((doc) => blame.invalidateDoc(doc.uri.toString())),
   );
 
   void checkGitAvailable();

@@ -23,7 +23,9 @@ export class BlameService {
   private cache = new Map<string, CacheEntry>();
   private repoByKey = new Map<string, string>();
 
-  getBlame(req: BlameRequest, signal?: AbortSignal): Promise<FileBlame | undefined> {
+  // no caller-supplied AbortSignal: the promise is shared across consumers,
+  // so one consumer's cancellation must not kill everyone's blame
+  getBlame(req: BlameRequest): Promise<FileBlame | undefined> {
     const cached = this.cache.get(req.key);
     if (cached && cached.version === req.version) {
       this.cache.delete(req.key);
@@ -31,7 +33,7 @@ export class BlameService {
       return cached.promise;
     }
 
-    const promise = this.blame(req, signal).catch((error) => {
+    const promise = this.blame(req).catch((error) => {
       this.invalidateDoc(req.key);
       throw error;
     });
@@ -45,7 +47,7 @@ export class BlameService {
     return promise;
   }
 
-  private async blame(req: BlameRequest, signal?: AbortSignal): Promise<FileBlame | undefined> {
+  private async blame(req: BlameRequest): Promise<FileBlame | undefined> {
     const contents = req.contents?.();
     if (contents !== undefined && contents.length > MAX_CONTENTS_BYTES) return undefined;
     if (req.sha !== undefined && !isValidSha(req.sha)) {
@@ -61,7 +63,6 @@ export class BlameService {
       const output = await runGit(args, {
         cwd: req.repoRoot,
         stdin: contents,
-        signal,
       });
       return parsePorcelain(output);
     } catch (error) {
