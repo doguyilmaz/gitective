@@ -39,9 +39,13 @@ describe("parseLogRecords", () => {
 
 describe("parseNameStatus", () => {
   test("parses modify, add, delete, rename", () => {
-    const output = ["M\tsrc/a.ts", "A\tsrc/b.ts", "D\tsrc/c.ts", "R087\told/x.ts\tnew/x.ts", ""].join(
-      "\n",
-    );
+    const output = [
+      "M\tsrc/a.ts",
+      "A\tsrc/b.ts",
+      "D\tsrc/c.ts",
+      "R087\told/x.ts\tnew/x.ts",
+      "",
+    ].join("\n");
     expect(parseNameStatus(output)).toEqual([
       { status: "M", path: "src/a.ts" },
       { status: "A", path: "src/b.ts" },

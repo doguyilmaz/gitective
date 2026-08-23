@@ -43,7 +43,11 @@ export function runGit(args: string[], opts: RunOptions): Promise<string> {
         if (error) {
           const exitCode = typeof error.code === "number" ? error.code : -1;
           reject(
-            new GitError(`git ${args[0] ?? ""} failed: ${stderr.trim() || error.message}`, exitCode, stderr),
+            new GitError(
+              `git ${args[0] ?? ""} failed: ${stderr.trim() || error.message}`,
+              exitCode,
+              stderr,
+            ),
           );
           return;
         }

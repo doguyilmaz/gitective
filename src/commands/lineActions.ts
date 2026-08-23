@@ -31,8 +31,10 @@ export function isLineTarget(arg: unknown): arg is LineTarget {
     (isUncommittedSha(t.sha) || isValidSha(t.sha)) &&
     typeof t.line === "number" &&
     typeof t.origLine === "number" &&
-    (t.previousSha === undefined || (typeof t.previousSha === "string" && isValidSha(t.previousSha))) &&
-    (t.previousPath === undefined || (typeof t.previousPath === "string" && isSafeRelPath(t.previousPath)))
+    (t.previousSha === undefined ||
+      (typeof t.previousSha === "string" && isValidSha(t.previousSha))) &&
+    (t.previousPath === undefined ||
+      (typeof t.previousPath === "string" && isSafeRelPath(t.previousPath)))
   );
 }
 

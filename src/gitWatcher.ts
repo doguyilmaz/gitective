@@ -72,7 +72,9 @@ export class GitWatcher implements vscode.Disposable {
       });
       return watcher;
     } catch (error) {
-      log().warn(`git watcher (${root}): ${error instanceof Error ? error.message : String(error)}`);
+      log().warn(
+        `git watcher (${root}): ${error instanceof Error ? error.message : String(error)}`,
+      );
       return undefined;
     }
   }

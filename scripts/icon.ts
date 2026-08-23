@@ -34,7 +34,10 @@ function sdRoundRect(p: Vec, center: Vec, half: Vec, radius: number): number {
 function sdSegment(p: Vec, a: Vec, b: Vec): number {
   const pa = sub(p, a);
   const ba = sub(b, a);
-  const h = Math.min(Math.max((pa[0] * ba[0] + pa[1] * ba[1]) / (ba[0] * ba[0] + ba[1] * ba[1]), 0), 1);
+  const h = Math.min(
+    Math.max((pa[0] * ba[0] + pa[1] * ba[1]) / (ba[0] * ba[0] + ba[1] * ba[1]), 0),
+    1,
+  );
   return len([pa[0] - ba[0] * h, pa[1] - ba[1] * h]);
 }
 

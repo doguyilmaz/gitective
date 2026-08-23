@@ -18,7 +18,9 @@ export function templateValuesFor(commit: BlameCommit, opts: RenderOptions): Tem
     authorEmail: commit.authorEmail,
     ago: formatAgo(commit.authorTime, opts.nowMs),
     date: formatDate(commit.authorTime, opts.locale),
-    message: commit.isUncommitted ? "Uncommitted changes" : truncate(commit.summary, opts.maxLength),
+    message: commit.isUncommitted
+      ? "Uncommitted changes"
+      : truncate(commit.summary, opts.maxLength),
     sha: shortSha(commit.sha),
   };
 }

@@ -87,13 +87,34 @@
     ],
     "menus": {
       "commandPalette": [
-        { "command": "whodunit.copySha", "when": "editorIsOpen" },
-        { "command": "whodunit.copyMessage", "when": "editorIsOpen" },
-        { "command": "whodunit.compareWithPrevious", "when": "editorIsOpen" },
-        { "command": "whodunit.openAtRevision", "when": "editorIsOpen" },
-        { "command": "whodunit.showCommit", "when": "editorIsOpen" },
-        { "command": "whodunit.fileHistory", "when": "editorIsOpen" },
-        { "command": "whodunit.lineActions", "when": "editorIsOpen" }
+        {
+          "command": "whodunit.copySha",
+          "when": "editorIsOpen"
+        },
+        {
+          "command": "whodunit.copyMessage",
+          "when": "editorIsOpen"
+        },
+        {
+          "command": "whodunit.compareWithPrevious",
+          "when": "editorIsOpen"
+        },
+        {
+          "command": "whodunit.openAtRevision",
+          "when": "editorIsOpen"
+        },
+        {
+          "command": "whodunit.showCommit",
+          "when": "editorIsOpen"
+        },
+        {
+          "command": "whodunit.fileHistory",
+          "when": "editorIsOpen"
+        },
+        {
+          "command": "whodunit.lineActions",
+          "when": "editorIsOpen"
+        }
       ]
     },
     "configuration": {
@@ -155,6 +176,7 @@
     "watch": "bun esbuild.mjs --watch",
     "check": "tsc --noEmit",
     "lint": "eslint .",
+    "format": "prettier --write src test scripts",
     "test": "bun test",
     "test:vsc": "bun run build && vscode-test",
     "vscode:prepublish": "bun esbuild.mjs --production",
@@ -169,6 +191,7 @@
     "@vscode/vsce": "^3.0.0",
     "esbuild": "^0.25.0",
     "eslint": "^9.0.0",
+    "prettier": "^3.9.6",
     "typescript": "^5.6.0",
     "typescript-eslint": "^8.0.0"
   },

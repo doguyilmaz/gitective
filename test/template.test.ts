@@ -25,9 +25,7 @@ describe("renderTemplate", () => {
   });
 
   test("inherited object keys are not tokens", () => {
-    expect(renderTemplate("${toString} ${constructor}", values)).toBe(
-      "${toString} ${constructor}",
-    );
+    expect(renderTemplate("${toString} ${constructor}", values)).toBe("${toString} ${constructor}");
   });
 
   test("repeated tokens and empty format", () => {
