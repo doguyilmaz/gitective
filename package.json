@@ -1,0 +1,164 @@
+{
+  "name": "whodunit",
+  "displayName": "Whodunit",
+  "description": "Git blame, and nothing else. Inline current-line blame, hover card with actions, real compare, status bar blame, commit search.",
+  "version": "0.1.0",
+  "publisher": "doguyilmaz",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "SCM Providers",
+    "Other"
+  ],
+  "keywords": [
+    "git",
+    "blame",
+    "annotate",
+    "history",
+    "diff"
+  ],
+  "extensionKind": [
+    "workspace"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "Whodunit runs git in your workspace, which requires trust."
+    },
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "Whodunit needs a local git repository."
+    }
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "whodunit.toggleInline",
+        "title": "Toggle Inline Blame",
+        "category": "Whodunit"
+      },
+      {
+        "command": "whodunit.copySha",
+        "title": "Copy Commit SHA",
+        "category": "Whodunit"
+      },
+      {
+        "command": "whodunit.copyMessage",
+        "title": "Copy Commit Message",
+        "category": "Whodunit"
+      },
+      {
+        "command": "whodunit.compareWithPrevious",
+        "title": "Compare Line Commit with Previous",
+        "category": "Whodunit"
+      },
+      {
+        "command": "whodunit.openAtRevision",
+        "title": "Open File at Line Revision",
+        "category": "Whodunit"
+      },
+      {
+        "command": "whodunit.showCommit",
+        "title": "Show Commit",
+        "category": "Whodunit"
+      },
+      {
+        "command": "whodunit.searchCommits",
+        "title": "Search Commits",
+        "category": "Whodunit"
+      },
+      {
+        "command": "whodunit.fileHistory",
+        "title": "File History",
+        "category": "Whodunit"
+      },
+      {
+        "command": "whodunit.lineActions",
+        "title": "Line Blame Actions",
+        "category": "Whodunit"
+      }
+    ],
+    "configuration": {
+      "title": "Whodunit",
+      "properties": {
+        "whodunit.inline.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show blame for the current line at the end of the line."
+        },
+        "whodunit.inline.format": {
+          "type": "string",
+          "default": "${author}, ${ago} • ${message}",
+          "markdownDescription": "Inline blame template. Tokens: `${author}`, `${authorEmail}`, `${ago}`, `${date}`, `${message}`, `${sha}`."
+        },
+        "whodunit.hover.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the blame hover card."
+        },
+        "whodunit.hover.showChanges": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include the diff hunk that introduced the line in the hover card."
+        },
+        "whodunit.statusBar.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show blame for the current line in the status bar."
+        },
+        "whodunit.statusBar.format": {
+          "type": "string",
+          "default": "$(git-commit) ${author}, ${ago}",
+          "markdownDescription": "Status bar blame template. Tokens: `${author}`, `${authorEmail}`, `${ago}`, `${date}`, `${message}`, `${sha}`. Codicons like `$(git-commit)` are allowed here."
+        },
+        "whodunit.message.maxLength": {
+          "type": "number",
+          "default": 60,
+          "minimum": 4,
+          "description": "Truncate commit messages to this many characters in inline blame and the status bar."
+        }
+      }
+    },
+    "colors": [
+      {
+        "id": "whodunit.inlineBlame.foreground",
+        "description": "Color of the inline blame annotation.",
+        "defaults": {
+          "dark": "#7d8590aa",
+          "light": "#73777daa",
+          "highContrast": "#99999999",
+          "highContrastLight": "#666666"
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "build": "bun esbuild.mjs",
+    "watch": "bun esbuild.mjs --watch",
+    "check": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "bun test",
+    "vscode:prepublish": "bun esbuild.mjs --production",
+    "package": "vsce package --allow-missing-repository"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.0",
+    "@types/node": "^20.0.0",
+    "@types/vscode": "1.85.0",
+    "@vscode/vsce": "^3.0.0",
+    "esbuild": "^0.25.0",
+    "eslint": "^9.0.0",
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.0.0"
+  },
+  "trustedDependencies": [
+    "@vscode/vsce-sign"
+  ]
+}
