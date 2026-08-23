@@ -144,7 +144,7 @@
     "watch": "bun esbuild.mjs --watch",
     "check": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "bun test test",
+    "test": "bun test",
     "test:vsc": "bun run build && vscode-test",
     "vscode:prepublish": "bun esbuild.mjs --production",
     "package": "vsce package --allow-missing-repository"
