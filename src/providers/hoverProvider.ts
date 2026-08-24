@@ -62,8 +62,61 @@ function safeText(text: string): string {
   return escapeCodicons(escapeMarkdown(text));
 }
 
+interface ResolvedLine {
+  ctx: DocContext;
+  found: LineBlame;
+  target: LineTarget;
+}
+
+// shared by both hover providers: same gating, same cached blame lookup
+async function resolveLine(
+  services: Services,
+  doc: vscode.TextDocument,
+  position: vscode.Position,
+  token: vscode.CancellationToken,
+): Promise<ResolvedLine | undefined> {
+  const cfg = getConfig();
+  if (!cfg.hoverEnabled) return undefined;
+  if (cfg.hoverTrigger === "annotation" && !overAnnotation(doc, position, cfg.inlineEnabled))
+    return undefined;
+  const ctx = await contextForDocument(doc, services.resolver);
+  if (!ctx || token.isCancellationRequested) return undefined;
+  const blame = await services.blame.getBlame(ctx.req);
+  if (!blame || token.isCancellationRequested) return undefined;
+  const found = lineBlameAt(blame, position.line + 1);
+  if (!found) return undefined;
+  return {
+    ctx,
+    found,
+    target: {
+      repoRoot: ctx.req.repoRoot,
+      relPath: found.commit.filename || ctx.req.relPath,
+      sha: found.commit.sha,
+      line: found.line.line,
+      origLine: found.line.origLine,
+      ...(found.commit.previous && {
+        previousSha: found.commit.previous.sha,
+        previousPath: found.commit.previous.path,
+      }),
+    },
+  };
+}
+
+// annotation mode: only the current line, and only past the end of its text
+// (where the inline blame renders); anywhere on the line when inline is off
+function overAnnotation(
+  doc: vscode.TextDocument,
+  position: vscode.Position,
+  inlineEnabled: boolean,
+): boolean {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor || editor.document !== doc) return false;
+  if (position.line !== editor.selection.active.line) return false;
+  if (!inlineEnabled) return true;
+  return position.character >= doc.lineAt(position.line).range.end.character;
+}
+
 export class BlameHoverProvider implements vscode.HoverProvider {
-  private readonly diffCache = new Map<string, Promise<string | undefined>>();
   private readonly messageCache = new Map<string, Promise<string | undefined>>();
   private readonly avatars = new AvatarService();
 
@@ -75,31 +128,13 @@ export class BlameHoverProvider implements vscode.HoverProvider {
     token: vscode.CancellationToken,
   ): Promise<vscode.Hover | undefined> {
     const cfg = getConfig();
-    if (!cfg.hoverEnabled) return undefined;
-    if (cfg.hoverTrigger === "annotation" && !this.overAnnotation(doc, position, cfg.inlineEnabled))
-      return undefined;
-    const ctx = await contextForDocument(doc, this.services.resolver);
-    if (!ctx || token.isCancellationRequested) return undefined;
-    const blame = await this.services.blame.getBlame(ctx.req);
-    if (!blame || token.isCancellationRequested) return undefined;
-    const found = lineBlameAt(blame, position.line + 1);
-    if (!found) return undefined;
+    const resolved = await resolveLine(this.services, doc, position, token);
+    if (!resolved) return undefined;
+    const { ctx, found, target } = resolved;
 
     const markdown = new vscode.MarkdownString(undefined, true);
     markdown.isTrusted = { enabledCommands: TRUSTED_COMMANDS };
     markdown.supportHtml = true;
-
-    const target: LineTarget = {
-      repoRoot: ctx.req.repoRoot,
-      relPath: found.commit.filename || ctx.req.relPath,
-      sha: found.commit.sha,
-      line: found.line.line,
-      origLine: found.line.origLine,
-      ...(found.commit.previous && {
-        previousSha: found.commit.previous.sha,
-        previousPath: found.commit.previous.path,
-      }),
-    };
 
     if (found.commit.isUncommitted) {
       const line1 = "<strong>You</strong>";
@@ -180,34 +215,8 @@ export class BlameHoverProvider implements vscode.HoverProvider {
     ].join(" &nbsp; ");
 
     const bodyBlock = body ? [body.split("\n").map(safeText).join("<br>")] : [];
-    const changesFooter = target.previousSha
-      ? commandLink(
-          `$(compare-changes) Changes \`${shortSha(target.previousSha)}\` ↔ \`${shortSha(found.commit.sha)}\``,
-          "whodunit.compareWithPrevious",
-          target,
-          "Open changes with previous revision",
-        )
-      : commandLink(
-          `$(compare-changes) Changes — added in \`${shortSha(found.commit.sha)}\``,
-          "whodunit.compareWithPrevious",
-          target,
-          "Open changes",
-        );
-
     markdown.appendMarkdown([header, ...bodyBlock, "---", actions].join("\n\n"));
-
-    // separate hover sections so the diff line is its own copyable block
-    const sections: vscode.MarkdownString[] = [markdown];
-    if (cfg.hoverShowChanges) {
-      const section = await this.changesSection(ctx, found);
-      if (token.isCancellationRequested) return undefined;
-      if (section) sections.push(new vscode.MarkdownString(section));
-    }
-    const footer = new vscode.MarkdownString(changesFooter, true);
-    footer.isTrusted = { enabledCommands: TRUSTED_COMMANDS };
-    sections.push(footer);
-
-    return new vscode.Hover(sections, doc.lineAt(position.line).range);
+    return new vscode.Hover(markdown, doc.lineAt(position.line).range);
   }
 
   private messageBodyFor(repoRoot: string, sha: string): Promise<string | undefined> {
@@ -230,19 +239,51 @@ export class BlameHoverProvider implements vscode.HoverProvider {
     }
     return promise;
   }
+}
 
-  // annotation mode: only the current line, and only past the end of its text
-  // (where the inline blame renders); anywhere on the line when inline is off
-  private overAnnotation(
+// a second, independent provider: its result renders as a separate hover
+// section with its own copy scope, exactly how gitlens splits its card
+export class BlameChangesHoverProvider implements vscode.HoverProvider {
+  private readonly diffCache = new Map<string, Promise<string | undefined>>();
+
+  constructor(private readonly services: Services) {}
+
+  async provideHover(
     doc: vscode.TextDocument,
     position: vscode.Position,
-    inlineEnabled: boolean,
-  ): boolean {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor || editor.document !== doc) return false;
-    if (position.line !== editor.selection.active.line) return false;
-    if (!inlineEnabled) return true;
-    return position.character >= doc.lineAt(position.line).range.end.character;
+    token: vscode.CancellationToken,
+  ): Promise<vscode.Hover | undefined> {
+    const cfg = getConfig();
+    const resolved = await resolveLine(this.services, doc, position, token);
+    if (!resolved) return undefined;
+    const { ctx, found, target } = resolved;
+    if (found.commit.isUncommitted) return undefined;
+
+    const parts: string[] = [];
+    if (cfg.hoverShowChanges) {
+      const section = await this.changesSection(ctx, found);
+      if (token.isCancellationRequested) return undefined;
+      if (section) parts.push(section);
+    }
+    parts.push(
+      target.previousSha
+        ? commandLink(
+            `$(compare-changes) Changes \`${shortSha(target.previousSha)}\` ↔ \`${shortSha(found.commit.sha)}\``,
+            "whodunit.compareWithPrevious",
+            target,
+            "Open changes with previous revision",
+          )
+        : commandLink(
+            `$(compare-changes) Changes — added in \`${shortSha(found.commit.sha)}\``,
+            "whodunit.compareWithPrevious",
+            target,
+            "Open changes",
+          ),
+    );
+
+    const markdown = new vscode.MarkdownString(parts.join("\n\n"), true);
+    markdown.isTrusted = { enabledCommands: TRUSTED_COMMANDS };
+    return new vscode.Hover(markdown, doc.lineAt(position.line).range);
   }
 
   // gitlens-style: only the blamed line's own diff line, in its own code
