@@ -29,13 +29,15 @@ export function activate(context: vscode.ExtensionContext): void {
     hud,
     watcher,
     vscode.workspace.registerTextDocumentContentProvider(REV_SCHEME, new RevisionContentProvider()),
-    vscode.languages.registerHoverProvider(
-      [{ scheme: "file" }, { scheme: REV_SCHEME }],
-      new BlameHoverProvider(services),
-    ),
+    // for equal selectors vs code renders the LAST-registered provider's
+    // hover first, so changes goes in before details to end up below it
     vscode.languages.registerHoverProvider(
       [{ scheme: "file" }, { scheme: REV_SCHEME }],
       new BlameChangesHoverProvider(services),
+    ),
+    vscode.languages.registerHoverProvider(
+      [{ scheme: "file" }, { scheme: REV_SCHEME }],
+      new BlameHoverProvider(services),
     ),
     ...registerCommands(services),
     vscode.workspace.onDidChangeConfiguration((event) => {
