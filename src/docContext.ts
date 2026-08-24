@@ -9,6 +9,7 @@ import { fromRevUri, REV_SCHEME } from "./uris";
 export interface DocContext {
   req: BlameRequest;
   isRevision: boolean;
+  userName?: string;
   userEmail?: string;
 }
 
@@ -21,6 +22,7 @@ export async function contextForDocument(
     if (!info) return undefined;
     return {
       isRevision: false,
+      userName: info.userName,
       userEmail: info.userEmail,
       req: {
         key: doc.uri.toString(),
@@ -38,6 +40,7 @@ export async function contextForDocument(
     const info = await resolver.repoForDir(ref.repoRoot);
     return {
       isRevision: true,
+      userName: info?.userName,
       userEmail: info?.userEmail,
       req: {
         key: doc.uri.toString(),

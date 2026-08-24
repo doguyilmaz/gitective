@@ -11,11 +11,12 @@ backwards through history from inside a diff. That's the whole extension.
 
 - **Inline blame** — the current line's last commit (author, age, message) rendered at
   the end of the line. Unsaved edits show as `Uncommitted changes`, never a stale commit.
-- **Hover card** — initials avatar (generated locally, no network), author, dates, full
-  message, short SHA, and actions: copy SHA/message, compare, open at revision, show
-  commit, file history. Includes the diff hunk that introduced the line. By default it
-  appears when hovering the inline annotation (GitLens-style); set
-  `whodunit.hover.trigger: "line"` to hover any line anywhere.
+- **Hover card** — real author avatars (GitHub repo lookup → Gravatar → GitHub by-email,
+  with locally generated initials when offline), author, dates, full message, short SHA,
+  and actions: copy SHA/message, compare, open at revision, show commit, file history.
+  Includes the diff hunk that introduced the line. By default it appears when hovering
+  the inline annotation (GitLens-style); set `whodunit.hover.trigger: "line"` to hover
+  any line anywhere.
 - **Compare** — opens a real VS Code diff between the line's commit and its parent
   (rename-aware). Both diff panes are themselves blameable, recursively, and ←/→ buttons
   in the diff title step through the file's history one revision at a time.
@@ -24,7 +25,9 @@ backwards through history from inside a diff. That's the whole extension.
 - **Search** — a commit QuickPick that searches messages as you type, `@name` for
   authors, or paste a SHA. Plus per-file history with one-keystroke diffs.
 
-No sidebars, no graphs, no AI, no telemetry, no network. Local git only.
+No sidebars, no graphs, no AI, no telemetry. Local git only — the single network use is
+avatar lookup (GitHub/Gravatar) while `whodunit.hover.avatars` is on; it reuses an
+existing VS Code GitHub session when present and never prompts.
 
 ## Commands
 
@@ -48,7 +51,7 @@ No sidebars, no graphs, no AI, no telemetry, no network. Local git only.
 | `whodunit.inline.format` | `${author}, ${ago} • ${message}` | Inline template |
 | `whodunit.hover.enabled` | `true` | Blame hover card |
 | `whodunit.hover.trigger` | `annotation` | Card over the inline annotation only, or `line` for any line |
-| `whodunit.hover.avatars` | `true` | Locally generated initials avatar in the card |
+| `whodunit.hover.avatars` | `true` | Author avatars (GitHub/Gravatar, initials fallback offline) |
 | `whodunit.hover.showChanges` | `true` | Diff hunk in the hover card |
 | `whodunit.dateFormat` | `medium` | Absolute date style for `${date}`, `${agoOrDate}`, hover |
 | `whodunit.statusBar.enabled` | `true` | Status bar blame |
