@@ -22,7 +22,7 @@ export function getConfig(): WhodunitConfig {
     hoverEnabled: config.get("hover.enabled", true),
     hoverTrigger: config.get("hover.trigger", "annotation" as const),
     hoverAvatars: config.get("hover.avatars", true),
-    hoverShowChanges: config.get("hover.showChanges", false),
+    hoverShowChanges: config.get("hover.showChanges", true),
     statusBarEnabled: config.get("statusBar.enabled", true),
     statusBarFormat: config.get("statusBar.format", "$(git-commit) ${author}, ${ago}"),
     messageMaxLength: Math.max(4, config.get("message.maxLength", 60)),

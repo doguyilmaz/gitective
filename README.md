@@ -52,7 +52,7 @@ existing VS Code GitHub session when present and never prompts.
 | `whodunit.hover.enabled` | `true` | Blame hover card |
 | `whodunit.hover.trigger` | `annotation` | Card over the inline annotation only, or `line` for any line |
 | `whodunit.hover.avatars` | `true` | Author avatars (GitHub/Gravatar, initials fallback offline) |
-| `whodunit.hover.showChanges` | `false` | Diff hunk in the hover card (opt-in; Compare/Commit have the diff) |
+| `whodunit.hover.showChanges` | `true` | The blamed line's own diff line in the hover card |
 | `whodunit.dateFormat` | `medium` | Absolute date style for `${date}`, `${agoOrDate}`, hover |
 | `whodunit.statusBar.enabled` | `true` | Status bar blame |
 | `whodunit.statusBar.format` | `$(git-commit) ${author}, ${ago}` | Status bar template (codicons allowed) |

@@ -4,7 +4,7 @@ import { getConfig } from "../config";
 import type { BlameCommit, LineBlame } from "../core/blame";
 import { lineBlameAt } from "../core/blame";
 import { messageBody } from "../core/gitLog";
-import { clipHunk, hunkForLine, parseUnifiedDiff } from "../core/hunk";
+import { hunkForLine, lineAtInHunk, parseUnifiedDiff } from "../core/hunk";
 import { templateValuesFor } from "../core/render";
 import { escapeCodicons, escapeMarkdown, shortSha } from "../core/sanitize";
 import type { DocContext } from "../docContext";
@@ -24,7 +24,6 @@ const TRUSTED_COMMANDS = [
   "whodunit.fileHistory",
 ];
 
-const HUNK_CONTEXT_LINES = 3;
 const DIFF_CACHE_LIMIT = 16;
 const AVATAR_SIZE = 34;
 
@@ -195,14 +194,14 @@ export class BlameHoverProvider implements vscode.HoverProvider {
           "Open changes",
         );
 
-    markdown.appendMarkdown([header, ...bodyBlock, "---", actions].join("\n\n"));
+    markdown.appendMarkdown([header, ...bodyBlock, "---", actions, "---"].join("\n\n"));
 
     if (cfg.hoverShowChanges) {
       const section = await this.changesSection(ctx, found);
       if (token.isCancellationRequested) return undefined;
-      if (section) markdown.appendMarkdown(`\n\n---\n\n${section}`);
+      if (section) markdown.appendMarkdown(`\n\n${section}`);
     }
-    markdown.appendMarkdown(`\n\n---\n\n${changesFooter}`);
+    markdown.appendMarkdown(`\n\n${changesFooter}`);
 
     return new vscode.Hover(markdown, doc.lineAt(position.line).range);
   }
@@ -242,14 +241,16 @@ export class BlameHoverProvider implements vscode.HoverProvider {
     return position.character >= doc.lineAt(position.line).range.end.character;
   }
 
+  // gitlens-style: only the blamed line's own diff line, in its own code
+  // block so the hover gives it a separate copy button
   private async changesSection(ctx: DocContext, found: LineBlame): Promise<string | undefined> {
     const diff = await this.diffFor(ctx.req.repoRoot, found.commit);
     if (!diff) return undefined;
     const hunk = hunkForLine(parseUnifiedDiff(diff), found.line.origLine);
     if (!hunk) return undefined;
-    const lines = clipHunk(hunk, found.line.origLine, HUNK_CONTEXT_LINES);
-    if (lines.length === 0) return undefined;
-    return `Changes in \`${shortSha(found.commit.sha)}\`\n\n${fence(lines)}`;
+    const line = lineAtInHunk(hunk, found.line.origLine);
+    if (!line) return undefined;
+    return fence([line]);
   }
 
   // shared cached promise: never bound to one hover's cancellation signal;

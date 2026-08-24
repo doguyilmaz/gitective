@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { clipHunk, hunkForLine, parseUnifiedDiff } from "../src/core/hunk";
+import { hunkForLine, lineAtInHunk, parseUnifiedDiff } from "../src/core/hunk";
 
 const diff = [
   "diff --git a/app.ts b/app.ts",
@@ -65,19 +65,16 @@ describe("hunkForLine", () => {
   });
 });
 
-describe("clipHunk", () => {
+describe("lineAtInHunk", () => {
   const hunks = parseUnifiedDiff(diff);
 
-  test("small hunk returned whole", () => {
-    const hunk = hunkForLine(hunks, 2);
-    expect(clipHunk(hunk!, 2, 7)).toEqual(hunk!.lines);
+  test("returns exactly the blamed line's diff line", () => {
+    expect(lineAtInHunk(hunkForLine(hunks, 2)!, 2)).toBe("+import b from 'b';");
+    expect(lineAtInHunk(hunkForLine(hunks, 12)!, 12)).toBe("+const two = 22;");
   });
 
-  test("clips around the target line", () => {
-    const big = parseUnifiedDiff(
-      ["@@ -1,9 +1,9 @@", ...Array.from({ length: 9 }, (_, i) => ` line${i + 1}`), ""].join("\n"),
-    );
-    const clipped = clipHunk(big[0]!, 5, 1);
-    expect(clipped).toEqual([" line4", " line5", " line6"]);
+  test("context lines and misses", () => {
+    expect(lineAtInHunk(hunkForLine(hunks, 1)!, 1)).toBe(" import a from 'a';");
+    expect(lineAtInHunk(hunkForLine(hunks, 2)!, 99)).toBeUndefined();
   });
 });

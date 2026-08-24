@@ -53,19 +53,14 @@ export function hunkForLine(hunks: Hunk[], line: number): Hunk | undefined {
   return hunks.find((h) => line >= h.newStart && line < h.newStart + h.newCount);
 }
 
-export function clipHunk(hunk: Hunk, line: number, context: number): string[] {
+export function lineAtInHunk(hunk: Hunk, line: number): string | undefined {
   let newLine = hunk.newStart;
-  let target = 0;
-  for (const [index, text] of hunk.lines.entries()) {
+  for (const text of hunk.lines) {
     const kind = text[0];
     if (kind === " " || kind === "+") {
-      if (newLine === line) {
-        target = index;
-        break;
-      }
+      if (newLine === line) return text;
       newLine++;
     }
   }
-  const start = Math.max(0, target - context);
-  return hunk.lines.slice(start, target + context + 1);
+  return undefined;
 }
