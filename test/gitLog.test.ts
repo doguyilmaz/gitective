@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { parseLogRecords, parseNameStatus } from "../src/core/gitLog";
+import { messageBody, parseLogRecords, parseNameStatus } from "../src/core/gitLog";
 
 const US = "\x1f";
 const RS = "\x1e";
@@ -56,6 +56,15 @@ describe("parseNameStatus", () => {
 
   test("ignores non-status noise", () => {
     expect(parseNameStatus("subject line\n\nM\ta.ts\n")).toEqual([{ status: "M", path: "a.ts" }]);
+  });
+
+  test("drops the summary line and trims the body", () => {
+    expect(messageBody("fix: summary\n\n- point one\n- point two\n")).toBe(
+      "- point one\n- point two",
+    );
+    expect(messageBody("only a summary\n")).toBe("");
+    expect(messageBody("crlf summary\r\n\r\nbody line\r\n")).toBe("body line");
+    expect(messageBody("")).toBe("");
   });
 
   test("unquotes C-quoted non-ascii paths", () => {

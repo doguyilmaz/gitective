@@ -21,6 +21,10 @@ export interface LogEntry {
 
 const STATUS_RE = /^([A-Z])\d*\t([^\t]+)(?:\t(.+))?$/;
 
+export function messageBody(fullMessage: string): string {
+  return fullMessage.replace(/\r\n/g, "\n").split("\n").slice(1).join("\n").trim();
+}
+
 export function parseNameStatus(output: string): FileChange[] {
   const changes: FileChange[] = [];
   for (const line of output.split("\n")) {

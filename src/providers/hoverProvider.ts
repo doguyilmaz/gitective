@@ -3,6 +3,7 @@ import { AvatarService } from "../avatarService";
 import { getConfig } from "../config";
 import type { BlameCommit, LineBlame } from "../core/blame";
 import { lineBlameAt } from "../core/blame";
+import { messageBody } from "../core/gitLog";
 import { clipHunk, hunkForLine, parseUnifiedDiff } from "../core/hunk";
 import { templateValuesFor } from "../core/render";
 import { escapeCodicons, escapeMarkdown, shortSha } from "../core/sanitize";
@@ -64,6 +65,7 @@ function safeText(text: string): string {
 
 export class BlameHoverProvider implements vscode.HoverProvider {
   private readonly diffCache = new Map<string, Promise<string | undefined>>();
+  private readonly messageCache = new Map<string, Promise<string | undefined>>();
   private readonly avatars = new AvatarService();
 
   constructor(private readonly services: Services) {}
@@ -137,21 +139,20 @@ export class BlameHoverProvider implements vscode.HoverProvider {
 
     const line1 = [
       `<strong>${safeText(values.author)}</strong>`,
-      values.ago,
-      safeText(values.date),
+      `${values.ago} <em>(${safeText(values.date)})</em>`,
     ].join(" &nbsp;·&nbsp; ");
     const line2 = safeText(found.commit.summary);
-    const header = cfg.hoverAvatars
-      ? avatarBlock(
-          await this.avatars.avatarFor(found.commit.author, found.commit.authorEmail, {
+    const [avatarSrc, body] = await Promise.all([
+      cfg.hoverAvatars
+        ? this.avatars.avatarFor(found.commit.author, found.commit.authorEmail, {
             repoRoot: ctx.req.repoRoot,
             sha: found.commit.sha,
-          }),
-          line1,
-          line2,
-        )
-      : `${line1}<br>${line2}`;
+          })
+        : Promise.resolve(undefined),
+      this.messageBodyFor(ctx.req.repoRoot, found.commit.sha),
+    ]);
     if (token.isCancellationRequested) return undefined;
+    const header = avatarSrc ? avatarBlock(avatarSrc, line1, line2) : `${line1}<br>${line2}`;
 
     const actions = [
       `\`${shortSha(found.commit.sha)}\``,
@@ -179,15 +180,52 @@ export class BlameHoverProvider implements vscode.HoverProvider {
       commandLink("$(history) History", "whodunit.fileHistory", target, "File history"),
     ].join(" &nbsp; ");
 
-    markdown.appendMarkdown([header, "---", actions].join("\n\n"));
+    const bodyBlock = body ? [body.split("\n").map(safeText).join("<br>")] : [];
+    const changesFooter = target.previousSha
+      ? commandLink(
+          `$(compare-changes) Changes \`${shortSha(target.previousSha)}\` ↔ \`${shortSha(found.commit.sha)}\``,
+          "whodunit.compareWithPrevious",
+          target,
+          "Open changes with previous revision",
+        )
+      : commandLink(
+          `$(compare-changes) Changes — added in \`${shortSha(found.commit.sha)}\``,
+          "whodunit.compareWithPrevious",
+          target,
+          "Open changes",
+        );
+
+    markdown.appendMarkdown([header, ...bodyBlock, "---", actions].join("\n\n"));
 
     if (cfg.hoverShowChanges) {
       const section = await this.changesSection(ctx, found);
       if (token.isCancellationRequested) return undefined;
       if (section) markdown.appendMarkdown(`\n\n---\n\n${section}`);
     }
+    markdown.appendMarkdown(`\n\n---\n\n${changesFooter}`);
 
     return new vscode.Hover(markdown, doc.lineAt(position.line).range);
+  }
+
+  private messageBodyFor(repoRoot: string, sha: string): Promise<string | undefined> {
+    const key = `${repoRoot} ${sha}`;
+    const cached = this.messageCache.get(key);
+    if (cached) return cached;
+    const promise = runGit(["show", "-s", "--format=%B", sha], { cwd: repoRoot }).then(
+      (full) => messageBody(full) || undefined,
+      (error: unknown) => {
+        this.messageCache.delete(key);
+        if (error instanceof GitError) log().warn(`hover message: ${error.message}`);
+        return undefined;
+      },
+    );
+    this.messageCache.set(key, promise);
+    while (this.messageCache.size > DIFF_CACHE_LIMIT) {
+      const oldest = this.messageCache.keys().next().value;
+      if (oldest === undefined) break;
+      this.messageCache.delete(oldest);
+    }
+    return promise;
   }
 
   // annotation mode: only the current line, and only past the end of its text

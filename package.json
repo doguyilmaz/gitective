@@ -174,8 +174,8 @@
         },
         "whodunit.hover.showChanges": {
           "type": "boolean",
-          "default": true,
-          "description": "Include the diff hunk that introduced the line in the hover card."
+          "default": false,
+          "description": "Include the diff hunk that introduced the line at the bottom of the hover card. Off keeps the hover minimal; Compare and Commit hold the diff."
         },
         "whodunit.statusBar.enabled": {
           "type": "boolean",

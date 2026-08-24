@@ -12,7 +12,7 @@ backwards through history from inside a diff. That's the whole extension.
 - **Inline blame** — the current line's last commit (author, age, message) rendered at
   the end of the line. Unsaved edits show as `Uncommitted changes`, never a stale commit.
 - **Hover card** — real author avatars (GitHub repo lookup → Gravatar → GitHub by-email,
-  with locally generated initials when offline), author, dates, full message, short SHA,
+  with locally generated initials when offline), author, dates, the full commit message (body included), short SHA,
   and actions: copy SHA/message, compare, open at revision, show commit, file history.
   Includes the diff hunk that introduced the line. By default it appears when hovering
   the inline annotation (GitLens-style); set `whodunit.hover.trigger: "line"` to hover
@@ -52,7 +52,7 @@ existing VS Code GitHub session when present and never prompts.
 | `whodunit.hover.enabled` | `true` | Blame hover card |
 | `whodunit.hover.trigger` | `annotation` | Card over the inline annotation only, or `line` for any line |
 | `whodunit.hover.avatars` | `true` | Author avatars (GitHub/Gravatar, initials fallback offline) |
-| `whodunit.hover.showChanges` | `true` | Diff hunk in the hover card |
+| `whodunit.hover.showChanges` | `false` | Diff hunk in the hover card (opt-in; Compare/Commit have the diff) |
 | `whodunit.dateFormat` | `medium` | Absolute date style for `${date}`, `${agoOrDate}`, hover |
 | `whodunit.statusBar.enabled` | `true` | Status bar blame |
 | `whodunit.statusBar.format` | `$(git-commit) ${author}, ${ago}` | Status bar template (codicons allowed) |
