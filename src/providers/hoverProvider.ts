@@ -194,16 +194,20 @@ export class BlameHoverProvider implements vscode.HoverProvider {
           "Open changes",
         );
 
-    markdown.appendMarkdown([header, ...bodyBlock, "---", actions, "---"].join("\n\n"));
+    markdown.appendMarkdown([header, ...bodyBlock, "---", actions].join("\n\n"));
 
+    // separate hover sections so the diff line is its own copyable block
+    const sections: vscode.MarkdownString[] = [markdown];
     if (cfg.hoverShowChanges) {
       const section = await this.changesSection(ctx, found);
       if (token.isCancellationRequested) return undefined;
-      if (section) markdown.appendMarkdown(`\n\n${section}`);
+      if (section) sections.push(new vscode.MarkdownString(section));
     }
-    markdown.appendMarkdown(`\n\n${changesFooter}`);
+    const footer = new vscode.MarkdownString(changesFooter, true);
+    footer.isTrusted = { enabledCommands: TRUSTED_COMMANDS };
+    sections.push(footer);
 
-    return new vscode.Hover(markdown, doc.lineAt(position.line).range);
+    return new vscode.Hover(sections, doc.lineAt(position.line).range);
   }
 
   private messageBodyFor(repoRoot: string, sha: string): Promise<string | undefined> {
