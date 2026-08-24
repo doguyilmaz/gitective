@@ -217,7 +217,7 @@ export class BlameHoverProvider implements vscode.HoverProvider {
   // shared cached promise: never bound to one hover's cancellation signal;
   // -m --first-parent keeps merge commits parseable as plain unified diffs
   private diffFor(repoRoot: string, commit: BlameCommit): Promise<string | undefined> {
-    const key = `${repoRoot} ${commit.sha} ${commit.filename}`;
+    const key = `${repoRoot} ${commit.sha} ${commit.filename}`;
     const cached = this.diffCache.get(key);
     if (cached) return cached;
     const promise = runGit(
