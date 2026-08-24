@@ -83,10 +83,36 @@
         "command": "whodunit.lineActions",
         "title": "Line Blame Actions",
         "category": "Whodunit"
+      },
+      {
+        "command": "whodunit.olderRevision",
+        "title": "Older Revision",
+        "category": "Whodunit",
+        "icon": "$(arrow-left)"
+      },
+      {
+        "command": "whodunit.newerRevision",
+        "title": "Newer Revision",
+        "category": "Whodunit",
+        "icon": "$(arrow-right)"
       }
     ],
     "menus": {
+      "editor/title": [
+        {
+          "command": "whodunit.olderRevision",
+          "when": "resourceScheme == whodunit",
+          "group": "navigation@1"
+        },
+        {
+          "command": "whodunit.newerRevision",
+          "when": "resourceScheme == whodunit",
+          "group": "navigation@2"
+        }
+      ],
       "commandPalette": [
+        { "command": "whodunit.olderRevision", "when": "resourceScheme == whodunit" },
+        { "command": "whodunit.newerRevision", "when": "resourceScheme == whodunit" },
         {
           "command": "whodunit.copySha",
           "when": "editorIsOpen"
@@ -128,12 +154,23 @@
         "whodunit.inline.format": {
           "type": "string",
           "default": "${author}, ${ago} • ${message}",
-          "markdownDescription": "Inline blame template. Tokens: `${author}`, `${authorEmail}`, `${ago}`, `${date}`, `${message}`, `${sha}`."
+          "markdownDescription": "Inline blame template. Tokens: `${author}`, `${authorEmail}`, `${ago}`, `${agoOrDate}`, `${date}`, `${message}`, `${sha}`."
         },
         "whodunit.hover.enabled": {
           "type": "boolean",
           "default": true,
           "description": "Show the blame hover card."
+        },
+        "whodunit.hover.trigger": {
+          "type": "string",
+          "enum": ["annotation", "line"],
+          "default": "annotation",
+          "markdownDescription": "`annotation`: show the card only when hovering the inline blame on the current line (falls back to the whole current line while inline blame is off). `line`: hover any line, anywhere."
+        },
+        "whodunit.hover.avatars": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a locally generated initials avatar in the hover card."
         },
         "whodunit.hover.showChanges": {
           "type": "boolean",
@@ -148,7 +185,13 @@
         "whodunit.statusBar.format": {
           "type": "string",
           "default": "$(git-commit) ${author}, ${ago}",
-          "markdownDescription": "Status bar blame template. Tokens: `${author}`, `${authorEmail}`, `${ago}`, `${date}`, `${message}`, `${sha}`. Codicons like `$(git-commit)` are allowed here."
+          "markdownDescription": "Status bar blame template. Tokens: `${author}`, `${authorEmail}`, `${ago}`, `${agoOrDate}`, `${date}`, `${message}`, `${sha}`. Codicons like `$(git-commit)` are allowed here."
+        },
+        "whodunit.dateFormat": {
+          "type": "string",
+          "enum": ["short", "medium", "long", "full"],
+          "default": "medium",
+          "markdownDescription": "Absolute date style used by `${date}`, `${agoOrDate}`, and the hover card."
         },
         "whodunit.message.maxLength": {
           "type": "number",

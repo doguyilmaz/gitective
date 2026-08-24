@@ -18,9 +18,19 @@ export function formatAgo(epochSec: number, nowMs = Date.now()): string {
   return "just now";
 }
 
-export function formatDate(epochSec: number, locale?: string): string {
+export type DateStyle = "short" | "medium" | "long" | "full";
+
+export function formatDate(epochSec: number, locale?: string, style: DateStyle = "medium"): string {
   return new Intl.DateTimeFormat(locale, {
-    dateStyle: "medium",
+    dateStyle: style,
     timeStyle: "short",
   }).format(new Date(epochSec * 1000));
+}
+
+export function formatDateOnly(
+  epochSec: number,
+  locale?: string,
+  style: DateStyle = "medium",
+): string {
+  return new Intl.DateTimeFormat(locale, { dateStyle: style }).format(new Date(epochSec * 1000));
 }

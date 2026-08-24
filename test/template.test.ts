@@ -5,6 +5,7 @@ const values: TemplateValues = {
   author: "Alice",
   authorEmail: "alice@example.com",
   ago: "5 days ago",
+  agoOrDate: "5 days ago",
   date: "Aug 18, 2026",
   message: "add ai package",
   sha: "a1b2c3d",

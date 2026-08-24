@@ -10,6 +10,7 @@ import {
   openAtRevision,
   showCommit,
 } from "./lineActions";
+import { newerRevision, olderRevision } from "./revNav";
 import { searchCommits } from "./search";
 
 type Handler = (services: Services, arg: unknown) => Promise<void>;
@@ -35,6 +36,8 @@ const handlers: Record<string, Handler> = {
   "whodunit.lineActions": lineActions,
   "whodunit.fileHistory": fileHistory,
   "whodunit.searchCommits": (services) => searchCommits(services),
+  "whodunit.olderRevision": (services) => olderRevision(services),
+  "whodunit.newerRevision": (services) => newerRevision(services),
   "whodunit.toggleInline": toggleInline,
 };
 
@@ -44,7 +47,7 @@ export function registerCommands(services: Services): vscode.Disposable[] {
       try {
         await handler(services, arg);
       } catch (error) {
-        await reportError(id, error);
+        reportError(id, error);
       }
     }),
   );

@@ -7,9 +7,11 @@ export function log(): vscode.LogOutputChannel {
   return channel;
 }
 
-export async function reportError(context: string, error: unknown): Promise<void> {
+// never awaited into a command's lifetime: an unclicked toast must not block callers
+export function reportError(context: string, error: unknown): void {
   const detail = error instanceof Error ? error.message : String(error);
   log().error(`${context}: ${detail}`);
-  const pick = await vscode.window.showErrorMessage("Whodunit hit an error.", "Open Logs");
-  if (pick) log().show();
+  void vscode.window.showErrorMessage("Whodunit hit an error.", "Open Logs").then((pick) => {
+    if (pick) log().show();
+  });
 }

@@ -31,6 +31,8 @@ const COMMANDS = [
   "whodunit.searchCommits",
   "whodunit.fileHistory",
   "whodunit.lineActions",
+  "whodunit.olderRevision",
+  "whodunit.newerRevision",
 ];
 
 suite("whodunit", () => {
@@ -95,5 +97,36 @@ suite("whodunit", () => {
     assert.strictEqual(original.getText(), "line one\n");
     assert.strictEqual(modified.getText(), "line one CHANGED\n");
     assert.ok(JSON.parse(tab.input.modified.query).sha === sha2, "modified pane pins the commit");
+  });
+
+  test("older/newer revision navigation steps through file history", async function () {
+    this.timeout(20000);
+    const { dir, git } = makeRepo();
+    const file = path.join(dir, "c.ts");
+    const shas = [];
+    for (const [index, content] of ["one\n", "two\n", "three\n"].entries()) {
+      fs.writeFileSync(file, content);
+      git("add", ".");
+      git("commit", "-qm", `commit ${index + 1}`);
+      shas.push(git("rev-parse", "HEAD"));
+    }
+
+    const doc = await vscode.workspace.openTextDocument(file);
+    const editor = await vscode.window.showTextDocument(doc);
+    editor.selection = new vscode.Selection(0, 0, 0, 0);
+    await vscode.commands.executeCommand("whodunit.compareWithPrevious");
+
+    const modifiedSha = () => {
+      const tab = vscode.window.tabGroups.activeTabGroup.activeTab;
+      assert.ok(tab.input instanceof vscode.TabInputTextDiff, "expected a diff tab");
+      return JSON.parse(tab.input.modified.query).sha;
+    };
+    assert.strictEqual(modifiedSha(), shas[2]);
+
+    await vscode.commands.executeCommand("whodunit.olderRevision");
+    assert.strictEqual(modifiedSha(), shas[1]);
+
+    await vscode.commands.executeCommand("whodunit.newerRevision");
+    assert.strictEqual(modifiedSha(), shas[2]);
   });
 });

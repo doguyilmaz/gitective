@@ -2,6 +2,7 @@ export interface TemplateValues {
   author: string;
   authorEmail: string;
   ago: string;
+  agoOrDate: string;
   date: string;
   message: string;
   sha: string;

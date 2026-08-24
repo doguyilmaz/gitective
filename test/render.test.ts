@@ -21,10 +21,18 @@ describe("templateValuesFor", () => {
     const values = templateValuesFor(commit, { maxLength: 60, nowMs: NOW, locale: "en-US" });
     expect(values.author).toBe("Alice");
     expect(values.ago).toBe("5 days ago");
+    expect(values.agoOrDate).toBe("5 days ago");
     expect(values.sha).toBe("a1b2c3d");
     expect(values.message.length).toBe(60);
     expect(values.message.endsWith("…")).toBe(true);
     expect(values.message.startsWith("add ai package")).toBe(true);
+  });
+
+  test("agoOrDate switches to an absolute date for old commits", () => {
+    const old = { ...commit, authorTime: NOW / 1000 - 90 * 86400 };
+    const values = templateValuesFor(old, { maxLength: 60, nowMs: NOW, locale: "en-US" });
+    expect(values.agoOrDate).not.toContain("ago");
+    expect(values.agoOrDate.length).toBeGreaterThan(5);
   });
 
   test("substitutes You for the repo user", () => {

@@ -11,12 +11,14 @@ backwards through history from inside a diff. That's the whole extension.
 
 - **Inline blame** — the current line's last commit (author, age, message) rendered at
   the end of the line. Unsaved edits show as `Uncommitted changes`, never a stale commit.
-- **Hover card** — author, relative + absolute date, full message, short SHA, and
-  actions: copy SHA, copy message, compare, open at revision, show commit, file history.
-  Includes the diff hunk that introduced the hovered line.
+- **Hover card** — initials avatar (generated locally, no network), author, dates, full
+  message, short SHA, and actions: copy SHA/message, compare, open at revision, show
+  commit, file history. Includes the diff hunk that introduced the line. By default it
+  appears when hovering the inline annotation (GitLens-style); set
+  `whodunit.hover.trigger: "line"` to hover any line anywhere.
 - **Compare** — opens a real VS Code diff between the line's commit and its parent
-  (rename-aware). Both diff panes are themselves blameable, recursively: hover inside an
-  old revision and keep walking back.
+  (rename-aware). Both diff panes are themselves blameable, recursively, and ←/→ buttons
+  in the diff title step through the file's history one revision at a time.
 - **Status bar blame** — a compact, customizable blame for the current line; click it
   for the line's action menu.
 - **Search** — a commit QuickPick that searches messages as you type, `@name` for
@@ -35,6 +37,7 @@ No sidebars, no graphs, no AI, no telemetry, no network. Local git only.
 | `Whodunit: Show Commit` | Browse the files changed in the line's commit |
 | `Whodunit: Search Commits` | Search commits by message, `@author`, or SHA |
 | `Whodunit: File History` | Walk the current file's commits |
+| `Whodunit: Older / Newer Revision` | Step through history from a Whodunit diff or revision tab |
 | `Whodunit: Copy Commit SHA / Message` | Straight to the clipboard |
 
 ## Settings
@@ -44,12 +47,16 @@ No sidebars, no graphs, no AI, no telemetry, no network. Local git only.
 | `whodunit.inline.enabled` | `true` | Inline blame for the current line |
 | `whodunit.inline.format` | `${author}, ${ago} • ${message}` | Inline template |
 | `whodunit.hover.enabled` | `true` | Blame hover card |
+| `whodunit.hover.trigger` | `annotation` | Card over the inline annotation only, or `line` for any line |
+| `whodunit.hover.avatars` | `true` | Locally generated initials avatar in the card |
 | `whodunit.hover.showChanges` | `true` | Diff hunk in the hover card |
+| `whodunit.dateFormat` | `medium` | Absolute date style for `${date}`, `${agoOrDate}`, hover |
 | `whodunit.statusBar.enabled` | `true` | Status bar blame |
 | `whodunit.statusBar.format` | `$(git-commit) ${author}, ${ago}` | Status bar template (codicons allowed) |
 | `whodunit.message.maxLength` | `60` | Message truncation for inline/status bar |
 
-Template tokens: `${author}` `${authorEmail}` `${ago}` `${date}` `${message}` `${sha}`.
+Template tokens: `${author}` `${authorEmail}` `${ago}` `${agoOrDate}` `${date}` `${message}` `${sha}`
+(`${agoOrDate}` is relative under 30 days, an absolute date after).
 The inline annotation color is themable via the `whodunit.inlineBlame.foreground` color.
 
 ## Notes

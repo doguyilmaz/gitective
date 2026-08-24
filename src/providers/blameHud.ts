@@ -27,7 +27,7 @@ export class BlameHud implements vscode.Disposable {
   });
   private readonly statusItem = vscode.window.createStatusBarItem(
     "whodunit.blame",
-    vscode.StatusBarAlignment.Left,
+    vscode.StatusBarAlignment.Right,
     100,
   );
   private readonly updateSeq = new WeakMap<vscode.TextEditor, number>();
@@ -115,6 +115,7 @@ export class BlameHud implements vscode.Disposable {
       userEmail: ctx.userEmail,
       maxLength: cfg.messageMaxLength,
       locale: vscode.env.language,
+      dateStyle: cfg.dateStyle,
     });
 
     if (cfg.inlineEnabled) {
