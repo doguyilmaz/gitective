@@ -1,66 +1,32 @@
 import * as vscode from "vscode";
 import { AvatarService } from "../avatarService";
+import type { LineTarget } from "../commands/lineActions";
 import { getConfig } from "../config";
-import type { BlameCommit, LineBlame } from "../core/blame";
+import type { LineBlame } from "../core/blame";
 import { lineBlameAt } from "../core/blame";
 import { messageBody } from "../core/gitLog";
 import { hunkForLine, lineAtInHunk, parseUnifiedDiff } from "../core/hunk";
 import { templateValuesFor } from "../core/render";
-import { escapeCodicons, escapeMarkdown, shortSha } from "../core/sanitize";
+import { shortSha } from "../core/sanitize";
+import { parseShortStat, type ShortStat } from "../core/shortstat";
 import type { DocContext } from "../docContext";
 import { contextForDocument } from "../docContext";
-import { encodePng } from "../core/png";
 import { GitError, runGit } from "../git/run";
+import { commandUri, renderChanges, renderDetails, type HoverModel } from "../hover/render";
 import { log } from "../log";
 import type { Services } from "../services";
-import type { LineTarget } from "../commands/lineActions";
 
 const TRUSTED_COMMANDS = [
   "whodunit.copySha",
-  "whodunit.copyMessage",
   "whodunit.compareWithPrevious",
+  "whodunit.compareWithWorking",
   "whodunit.openAtRevision",
-  "whodunit.showCommit",
   "whodunit.fileHistory",
+  "whodunit.lineHistory",
+  "whodunit.commitMenu",
 ];
 
-const DIFF_CACHE_LIMIT = 16;
-const AVATAR_SIZE = 34;
-
-// floats have no margin without a style attribute, so a transparent
-// 1x1 png stretched into a second float acts as the gutter
-const GUTTER_URI = `data:image/png;base64,${Buffer.from(encodePng(new Uint8Array(4), 1, 1)).toString("base64")}`;
-
-function avatarBlock(src: string, line1: string, line2: string): string {
-  return [
-    `<img src="${src}" width="${AVATAR_SIZE}" height="${AVATAR_SIZE}" align="left">`,
-    `<img src="${GUTTER_URI}" width="10" height="${AVATAR_SIZE}" align="left">`,
-    `${line1}<br>${line2}`,
-  ].join("");
-}
-
-function commandLink(label: string, command: string, target: LineTarget, title?: string): string {
-  // encodeURIComponent leaves ( ) unescaped, and a bare ) truncates a markdown link
-  const args = encodeURIComponent(JSON.stringify([target])).replace(/[()]/g, (char) =>
-    char === "(" ? "%28" : "%29",
-  );
-  return `[${label}](command:${command}?${args}${title ? ` "${title}"` : ""})`;
-}
-
-function fence(lines: string[]): string {
-  let longest = 2;
-  for (const line of lines) {
-    for (const match of line.matchAll(/`+/g)) {
-      longest = Math.max(longest, match[0].length);
-    }
-  }
-  const ticks = "`".repeat(longest + 1);
-  return `${ticks}diff\n${lines.join("\n")}\n${ticks}`;
-}
-
-function safeText(text: string): string {
-  return escapeCodicons(escapeMarkdown(text));
-}
+const CACHE_LIMIT = 32;
 
 interface ResolvedLine {
   ctx: DocContext;
@@ -116,12 +82,89 @@ function overAnnotation(
   return position.character >= doc.lineAt(position.line).range.end.character;
 }
 
+interface CommitInfo {
+  body?: string;
+  stat?: ShortStat;
+}
+
+// body and shortstat in one git call, cached per commit
+class CommitInfoCache {
+  private readonly cache = new Map<string, Promise<CommitInfo>>();
+
+  get(repoRoot: string, sha: string): Promise<CommitInfo> {
+    const key = `${repoRoot} ${sha}`;
+    const cached = this.cache.get(key);
+    if (cached) return cached;
+    const promise = runGit(
+      ["show", "--shortstat", "-m", "--first-parent", "--format=%B%x1e", sha],
+      { cwd: repoRoot },
+    ).then(
+      (out) => {
+        const [message = "", rest = ""] = out.split("\x1e");
+        return { body: messageBody(message) || undefined, stat: parseShortStat(rest) };
+      },
+      (error: unknown) => {
+        this.cache.delete(key);
+        if (error instanceof GitError) log().warn(`hover commit info: ${error.message}`);
+        return {};
+      },
+    );
+    this.cache.set(key, promise);
+    while (this.cache.size > CACHE_LIMIT) {
+      const oldest = this.cache.keys().next().value;
+      if (oldest === undefined) break;
+      this.cache.delete(oldest);
+    }
+    return promise;
+  }
+}
+
+const commitInfo = new CommitInfoCache();
+
+function modelFor(resolved: ResolvedLine, info: CommitInfo, avatarSrc?: string): HoverModel {
+  const { ctx, found, target } = resolved;
+  const cfg = getConfig();
+  const values = templateValuesFor(found.commit, {
+    userEmail: ctx.userEmail,
+    maxLength: Number.MAX_SAFE_INTEGER,
+    locale: vscode.env.language,
+    dateStyle: cfg.dateStyle,
+  });
+  return {
+    author: values.author,
+    ago: values.ago,
+    date: values.date,
+    summary: found.commit.summary,
+    body: info.body,
+    shortSha: shortSha(found.commit.sha),
+    previousShortSha: target.previousSha ? shortSha(target.previousSha) : undefined,
+    avatarSrc,
+    isUncommitted: found.commit.isUncommitted,
+    stat: info.stat,
+    links: {
+      copySha: commandUri("whodunit.copySha", target),
+      changes: commandUri("whodunit.compareWithPrevious", target),
+      changesWorking: commandUri("whodunit.compareWithWorking", target),
+      open: commandUri("whodunit.openAtRevision", target),
+      history: commandUri("whodunit.fileHistory", target),
+      lineHistory: commandUri("whodunit.lineHistory", target),
+      menu: commandUri("whodunit.commitMenu", target),
+    },
+  };
+}
+
+function trusted(markdown: string): vscode.MarkdownString {
+  const md = new vscode.MarkdownString(markdown, true);
+  md.isTrusted = { enabledCommands: TRUSTED_COMMANDS };
+  md.supportHtml = true;
+  return md;
+}
+
 export class BlameHoverProvider implements vscode.HoverProvider {
-  private readonly messageCache = new Map<string, Promise<string | undefined>>();
   private readonly avatars: AvatarService;
 
   constructor(private readonly services: Services) {
-    this.avatars = new AvatarService(services.remotes);
+    this.avatars = new AvatarService(services.remotes, services.globalState);
   }
 
   async provideHover(
@@ -129,122 +172,36 @@ export class BlameHoverProvider implements vscode.HoverProvider {
     position: vscode.Position,
     token: vscode.CancellationToken,
   ): Promise<vscode.Hover | undefined> {
-    const cfg = getConfig();
     const resolved = await resolveLine(this.services, doc, position, token);
     if (!resolved) return undefined;
-    const { ctx, found, target } = resolved;
+    const { ctx, found } = resolved;
+    const cfg = getConfig();
 
-    const markdown = new vscode.MarkdownString(undefined, true);
-    markdown.isTrusted = { enabledCommands: TRUSTED_COMMANDS };
-    markdown.supportHtml = true;
-
-    if (found.commit.isUncommitted) {
-      const line1 = "<strong>You</strong>";
-      const line2 = "<em>Uncommitted changes</em>";
-      const header = cfg.hoverAvatars
-        ? avatarBlock(
-            await this.avatars.avatarFor(ctx.userName ?? "You", ctx.userEmail ?? ""),
-            line1,
-            line2,
-          )
-        : `${line1}<br>${line2}`;
-      markdown.appendMarkdown(
-        [
-          header,
-          "---",
-          [
-            commandLink(
-              "$(diff) Compare with HEAD",
-              "whodunit.compareWithPrevious",
-              target,
-              "Diff the working file against HEAD",
-            ),
-            commandLink("$(history) History", "whodunit.fileHistory", target, "File history"),
-          ].join(" &nbsp;&nbsp; "),
-        ].join("\n\n"),
-      );
-      return new vscode.Hover(markdown, doc.lineAt(position.line).range);
-    }
-
-    const values = templateValuesFor(found.commit, {
-      userEmail: ctx.userEmail,
-      maxLength: Number.MAX_SAFE_INTEGER,
-      locale: vscode.env.language,
-      dateStyle: cfg.dateStyle,
-    });
-
-    const line1 = [
-      `<strong>${safeText(values.author)}</strong>`,
-      `${values.ago} <em>(${safeText(values.date)})</em>`,
-    ].join(" &nbsp;·&nbsp; ");
-    const line2 = safeText(found.commit.summary);
-    const [avatarSrc, body] = await Promise.all([
+    const [avatarSrc, info] = await Promise.all([
       cfg.hoverAvatars
-        ? this.avatars.avatarFor(found.commit.author, found.commit.authorEmail, {
-            repoRoot: ctx.req.repoRoot,
-            sha: found.commit.sha,
-          })
+        ? found.commit.isUncommitted
+          ? this.avatars.avatarFor(ctx.userName ?? "You", ctx.userEmail ?? "")
+          : this.avatars.avatarFor(found.commit.author, found.commit.authorEmail, {
+              repoRoot: ctx.req.repoRoot,
+              sha: found.commit.sha,
+            })
         : Promise.resolve(undefined),
-      this.messageBodyFor(ctx.req.repoRoot, found.commit.sha),
+      found.commit.isUncommitted
+        ? Promise.resolve({})
+        : commitInfo.get(ctx.req.repoRoot, found.commit.sha),
     ]);
     if (token.isCancellationRequested) return undefined;
-    const header = avatarSrc ? avatarBlock(avatarSrc, line1, line2) : `${line1}<br>${line2}`;
+    if (cfg.hoverAvatars) this.avatars.maybeAskConsent();
 
-    const actions = [
-      `\`${shortSha(found.commit.sha)}\``,
-      commandLink("$(copy)", "whodunit.copySha", target, "Copy SHA"),
-      commandLink("$(note)", "whodunit.copyMessage", target, "Copy commit message"),
-      "&nbsp;",
-      commandLink(
-        "$(diff) Compare",
-        "whodunit.compareWithPrevious",
-        target,
-        "Diff this commit against its previous revision",
-      ),
-      commandLink(
-        "$(go-to-file) Open",
-        "whodunit.openAtRevision",
-        target,
-        "Open the file at this revision",
-      ),
-      commandLink(
-        "$(files) Commit",
-        "whodunit.showCommit",
-        target,
-        "Browse the files changed in this commit",
-      ),
-      commandLink("$(history) History", "whodunit.fileHistory", target, "File history"),
-    ].join(" &nbsp; ");
-
-    const bodyBlock = body ? [body.split("\n").map(safeText).join("<br>")] : [];
-    markdown.appendMarkdown([header, ...bodyBlock, "---", actions].join("\n\n"));
-    return new vscode.Hover(markdown, doc.lineAt(position.line).range);
-  }
-
-  private messageBodyFor(repoRoot: string, sha: string): Promise<string | undefined> {
-    const key = `${repoRoot} ${sha}`;
-    const cached = this.messageCache.get(key);
-    if (cached) return cached;
-    const promise = runGit(["show", "-s", "--format=%B", sha], { cwd: repoRoot }).then(
-      (full) => messageBody(full) || undefined,
-      (error: unknown) => {
-        this.messageCache.delete(key);
-        if (error instanceof GitError) log().warn(`hover message: ${error.message}`);
-        return undefined;
-      },
+    return new vscode.Hover(
+      trusted(renderDetails(modelFor(resolved, info, avatarSrc))),
+      doc.lineAt(position.line).range,
     );
-    this.messageCache.set(key, promise);
-    while (this.messageCache.size > DIFF_CACHE_LIMIT) {
-      const oldest = this.messageCache.keys().next().value;
-      if (oldest === undefined) break;
-      this.messageCache.delete(oldest);
-    }
-    return promise;
   }
 }
 
 // a second, independent provider: its result renders as a separate hover
-// section with its own copy scope, exactly how gitlens splits its card
+// section with its own copy scope
 export class BlameChangesHoverProvider implements vscode.HoverProvider {
   private readonly diffCache = new Map<string, Promise<string | undefined>>();
 
@@ -255,79 +212,46 @@ export class BlameChangesHoverProvider implements vscode.HoverProvider {
     position: vscode.Position,
     token: vscode.CancellationToken,
   ): Promise<vscode.Hover | undefined> {
-    const cfg = getConfig();
     const resolved = await resolveLine(this.services, doc, position, token);
-    if (!resolved) return undefined;
-    const { ctx, found, target } = resolved;
-    if (found.commit.isUncommitted) return undefined;
+    if (!resolved || resolved.found.commit.isUncommitted) return undefined;
+    const { ctx, found } = resolved;
+    const cfg = getConfig();
 
-    const parts: string[] = [];
-    if (cfg.hoverShowChanges) {
-      const section = await this.changesSection(ctx, found);
-      if (token.isCancellationRequested) return undefined;
-      if (section) parts.push(section);
-    }
-    parts.push(
-      target.previousSha
-        ? commandLink(
-            `$(compare-changes) Changes \`${shortSha(target.previousSha)}\` ↔ \`${shortSha(found.commit.sha)}\``,
-            "whodunit.compareWithPrevious",
-            target,
-            "Open changes with previous revision",
-          )
-        : commandLink(
-            `$(compare-changes) Changes — added in \`${shortSha(found.commit.sha)}\``,
-            "whodunit.compareWithPrevious",
-            target,
-            "Open changes",
-          ),
+    const [diffLine, info] = await Promise.all([
+      cfg.hoverShowChanges ? this.diffLineFor(ctx, found) : Promise.resolve(undefined),
+      commitInfo.get(ctx.req.repoRoot, found.commit.sha),
+    ]);
+    if (token.isCancellationRequested) return undefined;
+
+    return new vscode.Hover(
+      trusted(renderChanges(modelFor(resolved, info), diffLine)),
+      doc.lineAt(position.line).range,
     );
-
-    const markdown = new vscode.MarkdownString(parts.join("\n\n"), true);
-    markdown.isTrusted = { enabledCommands: TRUSTED_COMMANDS };
-    return new vscode.Hover(markdown, doc.lineAt(position.line).range);
   }
 
-  // gitlens-style: only the blamed line's own diff line, in its own code
-  // block so the hover gives it a separate copy button
-  private async changesSection(ctx: DocContext, found: LineBlame): Promise<string | undefined> {
-    const diff = await this.diffFor(ctx.req.repoRoot, found.commit);
+  private async diffLineFor(ctx: DocContext, found: LineBlame): Promise<string | undefined> {
+    const diff = await this.diffFor(ctx.req.repoRoot, found.commit.sha, found.commit.filename);
     if (!diff) return undefined;
     const hunk = hunkForLine(parseUnifiedDiff(diff), found.line.origLine);
-    if (!hunk) return undefined;
-    const line = lineAtInHunk(hunk, found.line.origLine);
-    if (!line) return undefined;
-    return fence([line]);
+    return hunk && lineAtInHunk(hunk, found.line.origLine);
   }
 
   // shared cached promise: never bound to one hover's cancellation signal;
   // -m --first-parent keeps merge commits parseable as plain unified diffs
-  private diffFor(repoRoot: string, commit: BlameCommit): Promise<string | undefined> {
-    const key = `${repoRoot} ${commit.sha} ${commit.filename}`;
+  private diffFor(repoRoot: string, sha: string, path: string): Promise<string | undefined> {
+    const key = `${repoRoot} ${sha} ${path}`;
     const cached = this.diffCache.get(key);
     if (cached) return cached;
     const promise = runGit(
-      [
-        "show",
-        commit.sha,
-        "-m",
-        "--first-parent",
-        "--format=",
-        "--unified=3",
-        "--",
-        commit.filename,
-      ],
+      ["show", sha, "-m", "--first-parent", "--format=", "--unified=3", "--", path],
       { cwd: repoRoot },
     ).catch((error: unknown) => {
       this.diffCache.delete(key);
-      if (error instanceof GitError) {
-        log().warn(`hover changes: ${error.message}`);
-        return undefined;
-      }
+      if (error instanceof GitError) log().warn(`hover changes: ${error.message}`);
       return undefined;
     });
     this.diffCache.set(key, promise);
-    while (this.diffCache.size > DIFF_CACHE_LIMIT) {
+    while (this.diffCache.size > CACHE_LIMIT) {
       const oldest = this.diffCache.keys().next().value;
       if (oldest === undefined) break;
       this.diffCache.delete(oldest);

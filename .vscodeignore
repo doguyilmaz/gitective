@@ -1,6 +1,7 @@
 **
 !dist/extension.js
 !media/icon.png
+!media/walkthrough/**
 !README.md
 !CHANGELOG.md
 !LICENSE

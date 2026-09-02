@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { avatarDataUri } from "./core/avatar";
 import { avatarUrlCandidates } from "./core/avatarUrl";
 import { isValidSha } from "./core/sanitize";
+import { log } from "./log";
 import type { RemoteResolver } from "./git/remotes";
 
 const FETCH_TIMEOUT_MS = 2500;
@@ -31,11 +32,54 @@ async function fetchImageAsDataUri(url: string, token?: string): Promise<string 
   return `data:${type};base64,${bytes.toString("base64")}`;
 }
 
+const CONSENT_KEY = "avatars.consent";
+const FAILURES_BEFORE_TRIP = 3;
+
+type Consent = "granted" | "denied";
+
 export class AvatarService {
   private readonly cache = new Map<string, Promise<string>>();
-  constructor(private readonly remotes: RemoteResolver) {}
+  private failures = 0;
+  private tripped = false;
+  private asked = false;
+
+  constructor(
+    private readonly remotes: RemoteResolver,
+    private readonly state: vscode.Memento,
+  ) {}
+
+  consent(): Consent | undefined {
+    return this.state.get<Consent>(CONSENT_KEY);
+  }
+
+  async setConsent(value: Consent | undefined): Promise<void> {
+    await this.state.update(CONSENT_KEY, value);
+    this.cache.clear();
+  }
+
+  // one question per install, asked from the first hover that would have fetched
+  maybeAskConsent(): void {
+    if (this.asked || this.consent() !== undefined) return;
+    this.asked = true;
+    void vscode.window
+      .showInformationMessage(
+        "Whodunit: load author avatars from GitHub and Gravatar? Initials stay local otherwise.",
+        "Load avatars",
+        "Keep initials",
+      )
+      .then((pick) => {
+        if (pick === undefined) {
+          this.asked = false;
+          return;
+        }
+        void this.setConsent(pick === "Load avatars" ? "granted" : "denied");
+      });
+  }
 
   avatarFor(name: string, email: string, commit?: CommitRef): Promise<string> {
+    if (this.consent() !== "granted" || this.tripped) {
+      return Promise.resolve(avatarDataUri(name, email));
+    }
     const key = `${name}\n${email}`;
     let cached = this.cache.get(key);
     if (!cached) {
@@ -54,14 +98,30 @@ export class AvatarService {
     const fromApi = commit && (await this.fromGitHubApi(commit).catch(() => undefined));
     if (fromApi) return fromApi;
     for (const url of avatarUrlCandidates(email, AVATAR_SIZE)) {
+      if (this.tripped) break;
       try {
         const image = await fetchImageAsDataUri(url);
-        if (image) return image;
+        if (image) {
+          this.failures = 0;
+          return image;
+        }
       } catch {
-        continue;
+        this.noteFailure();
       }
     }
     return avatarDataUri(name, email);
+  }
+
+  // rate limits and offline machines: stop asking the network for the session
+  private trip(reason: string): void {
+    if (this.tripped) return;
+    this.tripped = true;
+    log().warn(`avatars: remote lookups paused for this session (${reason})`);
+  }
+
+  private noteFailure(): void {
+    this.failures++;
+    if (this.failures >= FAILURES_BEFORE_TRIP) this.trip("network failures");
   }
 
   // the GitLens mechanism: the repo's own commits, resolved by the GitHub API,
@@ -89,7 +149,12 @@ export class AvatarService {
         },
       },
     );
+    if (response.status === 403 || response.status === 429) {
+      this.trip(`github api ${response.status}`);
+      return undefined;
+    }
     if (!response.ok) return undefined;
+    this.failures = 0;
     const body = (await response.json()) as { author?: { avatar_url?: string } | null };
     const avatarUrl = body.author?.avatar_url;
     if (!avatarUrl || !avatarUrl.startsWith("https://avatars.githubusercontent.com/"))
@@ -97,5 +162,4 @@ export class AvatarService {
     const sized = `${avatarUrl}${avatarUrl.includes("?") ? "&" : "?"}s=${AVATAR_SIZE}`;
     return fetchImageAsDataUri(sized);
   }
-
 }

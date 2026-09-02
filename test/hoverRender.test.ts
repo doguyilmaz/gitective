@@ -55,7 +55,9 @@ describe("renderDetails", () => {
 
   test("avatar block floats the image when present", () => {
     const out = renderDetails({ ...model, avatarSrc: "data:image/png;base64,AAAA" });
-    expect(out).toContain('<img src="data:image/png;base64,AAAA" width="34" height="34" align="left">');
+    expect(out).toContain(
+      '<img src="data:image/png;base64,AAAA" width="34" height="34" align="left">',
+    );
   });
 });
 

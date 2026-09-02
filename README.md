@@ -1,47 +1,37 @@
 # Whodunit
 
-Git blame, and nothing else.
+Git blame that stays out of your way.
 
-Whodunit shows you who last touched the line you're on — inline, in a hover card with
-real actions, in the status bar — and lets you jump into an actual VS Code diff of the
-commit that introduced it. Old revisions blame themselves too, so you can keep digging
-backwards through history from inside a diff. That's the whole extension.
+Whodunit shows who last touched the line you're on and lets you act on it, without sidebars,
+graphs, accounts, or telemetry. Inline blame on the current line, a calm hover card, one grouped
+commit menu, real VS Code diffs you can walk through revision by revision, and line history.
+That's the whole extension: 27 KB, zero runtime dependencies.
 
-## Features
+## What you get
 
-- **Inline blame** — the current line's last commit (author, age, message) rendered at
-  the end of the line. Unsaved edits show as `Uncommitted changes`, never a stale commit.
-- **Hover card** — real author avatars (GitHub repo lookup → Gravatar → GitHub by-email,
-  with locally generated initials when offline), author, dates, the full commit message (body included), short SHA,
-  and actions: copy SHA/message, compare, open at revision, show commit, file history.
-  Includes the diff hunk that introduced the line. By default it appears when hovering
-  the inline annotation (GitLens-style); set `whodunit.hover.trigger: "line"` to hover
-  any line anywhere.
-- **Compare** — opens a real VS Code diff between the line's commit and its parent
-  (rename-aware). Both diff panes are themselves blameable, recursively, and ←/→ buttons
-  in the diff title step through the file's history one revision at a time.
-- **Status bar blame** — a compact, customizable blame for the current line; click it
-  for the line's action menu.
-- **Search** — a commit QuickPick that searches messages as you type, `@name` for
-  authors, or paste a SHA. Plus per-file history with one-keystroke diffs.
+- **Inline blame** at the end of the current line, tinted by commit age. Unsaved edits show as
+  uncommitted immediately, never as a stale commit.
+- **Hover card** on the annotation: avatar, author, dates, the full commit message, then plain
+  actions: `Changes`, `Open file @sha`, `History`, `Line history`, `Commit ⋯`. A second section shows
+  the blamed line's own diff line (copyable on its own) and a `Changes a ↔ b` footer that opens the diff.
+- **Commit menu** (`alt+shift+b`, status bar click, or `Commit ⋯`): open changes in this file, vs the
+  working tree, all changed files, inspect commit; open or copy the commit link on GitHub, GitLab or
+  Bitbucket; file and line history; copy SHA or message; and four safe git actions: create branch,
+  create tag, revert, checkout detached. Nothing rewrites history.
+- **Real diffs**: parent ↔ commit in a normal VS Code diff editor. Both panes blame themselves, so
+  hover inside and keep going back. `←` `→` in the title (`alt+shift+,` / `alt+shift+.`) step through
+  the file's revisions. Snapshot tabs are named `file @ sha` and keep syntax highlighting.
+- **Inspect commit**: a read-only text document with header, message, stat and patch, with
+  `Open side-by-side` lenses on every file. Searchable and copyable; no webview.
+- **Search and history**: commit search as you type (message, `@author`, SHA), file history, and
+  line history (`alt+shift+h`), each a click from the commit menu.
+- Works in VS Code's own Git diffs too (Source Control view documents).
 
-No sidebars, no graphs, no AI, no telemetry. Local git only — the single network use is
-avatar lookup (GitHub/Gravatar) while `whodunit.hover.avatars` is on; it reuses an
-existing VS Code GitHub session when present and never prompts.
+## Privacy
 
-## Commands
-
-| Command | What it does |
-| --- | --- |
-| `Whodunit: Toggle Inline Blame` | Turn the inline annotation on/off |
-| `Whodunit: Line Blame Actions` | Action menu for the current line (also on status bar click) |
-| `Whodunit: Compare Line Commit with Previous` | Diff the line's commit against its parent |
-| `Whodunit: Open File at Line Revision` | Open the file as it was in the line's commit |
-| `Whodunit: Show Commit` | Browse the files changed in the line's commit |
-| `Whodunit: Search Commits` | Search commits by message, `@author`, or SHA |
-| `Whodunit: File History` | Walk the current file's commits |
-| `Whodunit: Older / Newer Revision` | Step through history from a Whodunit diff or revision tab |
-| `Whodunit: Copy Commit SHA / Message` | Straight to the clipboard |
+No telemetry. Git runs locally. The only network use is author avatars (GitHub via the repo's
+`origin`, then Gravatar) and only after you say yes to a one-time prompt; say no and you get
+locally generated initials. Set `whodunit.hover.avatars` to `false` to never be asked.
 
 ## Settings
 
@@ -49,44 +39,56 @@ existing VS Code GitHub session when present and never prompts.
 | --- | --- | --- |
 | `whodunit.inline.enabled` | `true` | Inline blame for the current line |
 | `whodunit.inline.format` | `${author}, ${ago} • ${message}` | Inline template |
+| `whodunit.inline.ageTint` | `true` | Tint the annotation by commit age (`whodunit.inlineBlame.age1…age5`) |
 | `whodunit.hover.enabled` | `true` | Blame hover card |
 | `whodunit.hover.trigger` | `annotation` | Card over the inline annotation only, or `line` for any line |
-| `whodunit.hover.avatars` | `true` | Author avatars (GitHub/Gravatar, initials fallback offline) |
-| `whodunit.hover.showChanges` | `true` | The blamed line's own diff line in the hover card |
-| `whodunit.dateFormat` | `medium` | Absolute date style for `${date}`, `${agoOrDate}`, hover |
-| `whodunit.statusBar.enabled` | `true` | Status bar blame |
+| `whodunit.hover.avatars` | `true` | Allow avatars (asked once; initials until granted) |
+| `whodunit.hover.showChanges` | `true` | The blamed line's own diff line in the hover |
+| `whodunit.statusBar.enabled` | `true` | Status bar blame (click opens the commit menu) |
 | `whodunit.statusBar.format` | `$(git-commit) ${author}, ${ago}` | Status bar template (codicons allowed) |
+| `whodunit.dateFormat` | `medium` | Absolute date style for `${date}`, `${agoOrDate}`, hover |
 | `whodunit.message.maxLength` | `60` | Message truncation for inline/status bar |
+| `whodunit.blame.ignoreWhitespace` | `false` | `git blame -w`: reformatting commits stop claiming lines |
+| `whodunit.blame.ignoreRevsFile` | `true` | Honor `.git-blame-ignore-revs` at the repo root |
 
 Template tokens: `${author}` `${authorEmail}` `${ago}` `${agoOrDate}` `${date}` `${message}` `${sha}`
 (`${agoOrDate}` is relative under 30 days, an absolute date after).
-The inline annotation color is themable via the `whodunit.inlineBlame.foreground` color.
+
+## Keys
+
+| Key | Does | When |
+| --- | --- | --- |
+| `alt+shift+b` | Commit menu for the current line | editor focused |
+| `alt+shift+h` | Line history | editor focused |
+| `alt+shift+,` / `alt+shift+.` | Older / newer revision | a Whodunit revision or diff tab is active |
+
+## Commands
+
+`Whodunit:` Commit Menu for Current Line · Inspect Commit · Changes with Previous Revision ·
+Changes with Working Tree · Open File at Revision · File History · Line History · Search Commits ·
+Open Commit on Remote · Copy Commit Link · Copy Commit SHA · Copy Commit Message · Older / Newer
+Revision · Toggle Inline Blame.
 
 ## Notes
 
 - Requires `git` on your PATH. Files larger than 5 MB are not blamed.
 - Untrusted and virtual workspaces are not supported (Whodunit runs git in your workspace).
+- Not in scope, on purpose: whole-file gutter blame, sidebar views, commit graph, rebase/reset,
+  PR/issue integrations, AI.
 
 ## Development
 
 ```sh
 bun install
-bun run build     # bundle with esbuild
-bun test          # unit tests (bun)
-bun run test:vsc  # extension host smoke test
-bun run check     # tsc --noEmit
-bun run lint      # eslint
+bun run watch     # rebuild on save; F5 launches an Extension Development Host
+bun run test      # unit tests (bun)
+bun run test:vsc  # real VS Code host tests
+bun run check && bun run lint
 bun run package   # build the .vsix
 ```
 
-Press `F5` in VS Code to launch an Extension Development Host.
-
-### Publishing checklist
-
-1. Add a `repository` field to `package.json` once the repo is public.
-2. `bunx vsce login doguyilmaz`
-3. `bun run package` and sanity-check the `.vsix` contents with `bunx vsce ls`.
-4. `bunx vsce publish`
+See `CONTRIBUTING.md`. Publishing: add `repository` to `package.json`, `bunx vsce login doguyilmaz`,
+push a `v*` tag (the release workflow publishes with `VSCE_PAT`).
 
 ## License
 

@@ -6,6 +6,7 @@ import { parseNameStatus } from "../core/gitLog";
 import { isValidSha, shortSha } from "../core/sanitize";
 import { formatAgo } from "../core/time";
 import { GitError, runGit } from "../git/run";
+import { openRevisionDocument } from "../language";
 import { toRevUri } from "../uris";
 
 export interface CommitPickItem extends vscode.QuickPickItem {
@@ -52,6 +53,10 @@ export async function openDiffForChange(
   const right = deleted
     ? toRevUri({ repoRoot, sha: EMPTY_SHA, relPath: change.path })
     : toRevUri({ repoRoot, sha, relPath: change.path });
+  await Promise.all([
+    openRevisionDocument(left, change.path),
+    openRevisionDocument(right, change.path),
+  ]);
   await vscode.commands.executeCommand(
     "vscode.diff",
     left,
@@ -95,35 +100,4 @@ export async function showCommitFiles(repoRoot: string, sha: string): Promise<vo
     matchOnDescription: true,
   });
   if (picked) await openDiffForChange(repoRoot, sha, picked.change);
-}
-
-export async function pickCommitAction(repoRoot: string, entry: LogEntry): Promise<void> {
-  interface ActionItem extends vscode.QuickPickItem {
-    run: () => Promise<void>;
-  }
-  const items: ActionItem[] = [
-    {
-      label: "$(git-commit) Show Commit",
-      run: () => showCommitFiles(repoRoot, entry.sha),
-    },
-    {
-      label: "$(copy) Copy SHA",
-      run: async () => {
-        await vscode.env.clipboard.writeText(entry.sha);
-        vscode.window.setStatusBarMessage(`Copied ${shortSha(entry.sha)}`, 3000);
-      },
-    },
-    {
-      label: "$(note) Copy Message",
-      run: async () => {
-        const message = await runGit(["show", "-s", "--format=%B", entry.sha], { cwd: repoRoot });
-        await vscode.env.clipboard.writeText(message.trim());
-        vscode.window.setStatusBarMessage(`Copied message of ${shortSha(entry.sha)}`, 3000);
-      },
-    },
-  ];
-  const picked = await vscode.window.showQuickPick(items, {
-    placeHolder: `${shortSha(entry.sha)} — ${entry.subject}`,
-  });
-  if (picked) await picked.run();
 }

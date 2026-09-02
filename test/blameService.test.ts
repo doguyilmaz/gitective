@@ -119,3 +119,72 @@ describe("BlameService caching", () => {
     expect(await service.getBlame(req(repo, { contents: () => huge }))).toBeUndefined();
   });
 });
+
+describe("BlameService options", () => {
+  const WS_FILE = "ws.txt";
+
+  async function repoWithWhitespaceCommit() {
+    const repo = await makeRepo();
+    const original = await commitFile(repo, WS_FILE, "alpha\nbeta\n", "content", {
+      name: "Alice",
+      email: "alice@example.com",
+    });
+    const reformat = await commitFile(repo, WS_FILE, "alpha\n  beta\n", "reindent", {
+      name: "Bot",
+      email: "bot@example.com",
+    });
+    return { repo, original, reformat };
+  }
+
+  test("ignoreWhitespace attributes reindented lines to the original author", async () => {
+    const { repo, original, reformat } = await repoWithWhitespaceCommit();
+    const contents = await readFile(join(repo, WS_FILE), "utf8");
+    const plain = new BlameService();
+    const withWs = new BlameService();
+    withWs.configure({ ignoreWhitespace: true, ignoreRevsFile: false });
+    const req = {
+      key: `${repo}/${WS_FILE}`,
+      version: 1,
+      repoRoot: repo,
+      relPath: WS_FILE,
+      contents: () => contents,
+    };
+    expect((await plain.getBlame(req))?.lines[1]?.sha).toBe(reformat);
+    expect((await withWs.getBlame(req))?.lines[1]?.sha).toBe(original);
+  });
+
+  test(".git-blame-ignore-revs is honored and a broken one is tolerated", async () => {
+    const { repo, original, reformat } = await repoWithWhitespaceCommit();
+    const contents = await readFile(join(repo, WS_FILE), "utf8");
+    const req = {
+      key: `${repo}/${WS_FILE}`,
+      version: 1,
+      repoRoot: repo,
+      relPath: WS_FILE,
+      contents: () => contents,
+    };
+    const { writeFile } = await import("node:fs/promises");
+    await writeFile(join(repo, ".git-blame-ignore-revs"), `${reformat}\n`);
+    expect((await new BlameService().getBlame(req))?.lines[1]?.sha).toBe(original);
+    await writeFile(join(repo, ".git-blame-ignore-revs"), "not-a-sha\n");
+    expect((await new BlameService().getBlame(req))?.lines[1]?.sha).toBe(reformat);
+  });
+
+  test("configure clears the cache only when options change", async () => {
+    const { repo } = await repoWithWhitespaceCommit();
+    const contents = await readFile(join(repo, WS_FILE), "utf8");
+    const req = {
+      key: `${repo}/${WS_FILE}`,
+      version: 1,
+      repoRoot: repo,
+      relPath: WS_FILE,
+      contents: () => contents,
+    };
+    const service = new BlameService();
+    const first = await service.getBlame(req);
+    service.configure({ ignoreWhitespace: false, ignoreRevsFile: true });
+    expect(await service.getBlame(req)).toBe(first!);
+    service.configure({ ignoreWhitespace: true, ignoreRevsFile: true });
+    expect(await service.getBlame(req)).not.toBe(first!);
+  });
+});

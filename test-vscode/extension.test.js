@@ -23,16 +23,21 @@ function makeRepo() {
 
 const COMMANDS = [
   "whodunit.toggleInline",
+  "whodunit.commitMenu",
+  "whodunit.inspectCommit",
+  "whodunit.compareWithPrevious",
+  "whodunit.compareWithWorking",
+  "whodunit.openAtRevision",
+  "whodunit.fileHistory",
+  "whodunit.lineHistory",
+  "whodunit.searchCommits",
+  "whodunit.openOnRemote",
+  "whodunit.copyRemoteLink",
   "whodunit.copySha",
   "whodunit.copyMessage",
-  "whodunit.compareWithPrevious",
-  "whodunit.openAtRevision",
-  "whodunit.showCommit",
-  "whodunit.searchCommits",
-  "whodunit.fileHistory",
-  "whodunit.lineActions",
   "whodunit.olderRevision",
   "whodunit.newerRevision",
+  "whodunit.openChangeInCommit",
 ];
 
 suite("whodunit", () => {
@@ -128,5 +133,71 @@ suite("whodunit", () => {
 
     await vscode.commands.executeCommand("whodunit.newerRevision");
     assert.strictEqual(modifiedSha(), shas[2]);
+  });
+
+  test("openAtRevision names the tab after the revision and keeps the language", async function () {
+    this.timeout(20000);
+    const { dir, git } = makeRepo();
+    const file = path.join(dir, "d.ts");
+    fs.writeFileSync(file, "export const d = 1;\n");
+    git("add", ".");
+    git("commit", "-qm", "first");
+    const sha = git("rev-parse", "HEAD");
+
+    const doc = await vscode.workspace.openTextDocument(file);
+    const editor = await vscode.window.showTextDocument(doc);
+    editor.selection = new vscode.Selection(0, 0, 0, 0);
+    await vscode.commands.executeCommand("whodunit.openAtRevision");
+
+    const active = vscode.window.activeTextEditor;
+    assert.strictEqual(active.document.uri.scheme, "whodunit");
+    assert.ok(path.posix.basename(active.document.uri.path).includes(`@ ${sha.slice(0, 7)}`), "tab carries the sha");
+    assert.strictEqual(active.document.languageId, "typescript");
+    assert.strictEqual(active.document.getText(), "export const d = 1;\n");
+  });
+
+  test("inspectCommit opens a diff-language document with the commit header", async function () {
+    this.timeout(20000);
+    const { dir, git } = makeRepo();
+    const file = path.join(dir, "e.ts");
+    fs.writeFileSync(file, "one\n");
+    git("add", ".");
+    git("commit", "-qm", "inspect me");
+    const sha = git("rev-parse", "HEAD");
+
+    await vscode.commands.executeCommand("whodunit.inspectCommit", { repoRoot: dir, sha });
+    const active = vscode.window.activeTextEditor;
+    assert.strictEqual(active.document.uri.scheme, "whodunit-commit");
+    assert.strictEqual(active.document.languageId, "diff");
+    assert.ok(active.document.getText().startsWith(`commit ${sha}`));
+    assert.ok(active.document.getText().includes("inspect me"));
+    assert.ok(active.document.getText().includes("diff --git a/e.ts b/e.ts"));
+  });
+
+  test("compareWithWorking diffs the line's commit against the working file", async function () {
+    this.timeout(20000);
+    const { dir, git } = makeRepo();
+    const file = path.join(dir, "f.ts");
+    fs.writeFileSync(file, "v1\n");
+    git("add", ".");
+    git("commit", "-qm", "first");
+    fs.writeFileSync(file, "v1\nlocal edit\n");
+
+    const doc = await vscode.workspace.openTextDocument(file);
+    const editor = await vscode.window.showTextDocument(doc);
+    editor.selection = new vscode.Selection(0, 0, 0, 0);
+    await vscode.commands.executeCommand("whodunit.compareWithWorking");
+    const tab = vscode.window.tabGroups.activeTabGroup.activeTab;
+    assert.ok(tab.input instanceof vscode.TabInputTextDiff);
+    assert.strictEqual(tab.input.original.scheme, "whodunit");
+    assert.strictEqual(tab.input.modified.scheme, "file");
+  });
+
+  test("contributes the default keybindings", () => {
+    const extension = vscode.extensions.getExtension("doguyilmaz.whodunit");
+    const keys = extension.packageJSON.contributes.keybindings.map((k) => `${k.command}=${k.key}`);
+    assert.ok(keys.includes("whodunit.commitMenu=alt+shift+b"));
+    assert.ok(keys.includes("whodunit.lineHistory=alt+shift+h"));
+    assert.ok(keys.includes("whodunit.olderRevision=alt+shift+,"));
   });
 });

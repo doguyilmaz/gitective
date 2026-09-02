@@ -1,8 +1,8 @@
 {
   "name": "whodunit",
   "displayName": "Whodunit",
-  "description": "Git blame, and nothing else. Inline current-line blame, hover card with actions, real compare, status bar blame, commit search.",
-  "version": "0.1.0",
+  "description": "Git blame that stays out of your way: inline current-line blame, a calm hover card, a grouped commit menu, real diffs you can walk through, line history.",
+  "version": "0.2.0",
   "publisher": "doguyilmaz",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -10,7 +10,6 @@
     "vscode": "^1.85.0"
   },
   "categories": [
-    "SCM Providers",
     "Other"
   ],
   "keywords": [
@@ -45,33 +44,28 @@
         "category": "Whodunit"
       },
       {
-        "command": "whodunit.copySha",
-        "title": "Copy Commit SHA",
+        "command": "whodunit.commitMenu",
+        "title": "Commit Menu for Current Line",
         "category": "Whodunit"
       },
       {
-        "command": "whodunit.copyMessage",
-        "title": "Copy Commit Message",
+        "command": "whodunit.inspectCommit",
+        "title": "Inspect Commit",
         "category": "Whodunit"
       },
       {
         "command": "whodunit.compareWithPrevious",
-        "title": "Compare Line Commit with Previous",
+        "title": "Changes with Previous Revision",
+        "category": "Whodunit"
+      },
+      {
+        "command": "whodunit.compareWithWorking",
+        "title": "Changes with Working Tree",
         "category": "Whodunit"
       },
       {
         "command": "whodunit.openAtRevision",
-        "title": "Open File at Line Revision",
-        "category": "Whodunit"
-      },
-      {
-        "command": "whodunit.showCommit",
-        "title": "Show Commit",
-        "category": "Whodunit"
-      },
-      {
-        "command": "whodunit.searchCommits",
-        "title": "Search Commits",
+        "title": "Open File at Revision",
         "category": "Whodunit"
       },
       {
@@ -80,8 +74,33 @@
         "category": "Whodunit"
       },
       {
-        "command": "whodunit.lineActions",
-        "title": "Line Blame Actions",
+        "command": "whodunit.lineHistory",
+        "title": "Line History",
+        "category": "Whodunit"
+      },
+      {
+        "command": "whodunit.searchCommits",
+        "title": "Search Commits",
+        "category": "Whodunit"
+      },
+      {
+        "command": "whodunit.openOnRemote",
+        "title": "Open Commit on Remote",
+        "category": "Whodunit"
+      },
+      {
+        "command": "whodunit.copyRemoteLink",
+        "title": "Copy Commit Link",
+        "category": "Whodunit"
+      },
+      {
+        "command": "whodunit.copySha",
+        "title": "Copy Commit SHA",
+        "category": "Whodunit"
+      },
+      {
+        "command": "whodunit.copyMessage",
+        "title": "Copy Commit Message",
         "category": "Whodunit"
       },
       {
@@ -95,6 +114,11 @@
         "title": "Newer Revision",
         "category": "Whodunit",
         "icon": "$(arrow-right)"
+      },
+      {
+        "command": "whodunit.openChangeInCommit",
+        "title": "Open Change in Commit",
+        "category": "Whodunit"
       }
     ],
     "menus": {
@@ -111,14 +135,24 @@
         }
       ],
       "commandPalette": [
-        { "command": "whodunit.olderRevision", "when": "resourceScheme == whodunit" },
-        { "command": "whodunit.newerRevision", "when": "resourceScheme == whodunit" },
         {
-          "command": "whodunit.copySha",
+          "command": "whodunit.olderRevision",
+          "when": "resourceScheme == whodunit"
+        },
+        {
+          "command": "whodunit.newerRevision",
+          "when": "resourceScheme == whodunit"
+        },
+        {
+          "command": "whodunit.openChangeInCommit",
+          "when": "false"
+        },
+        {
+          "command": "whodunit.commitMenu",
           "when": "editorIsOpen"
         },
         {
-          "command": "whodunit.copyMessage",
+          "command": "whodunit.inspectCommit",
           "when": "editorIsOpen"
         },
         {
@@ -126,11 +160,11 @@
           "when": "editorIsOpen"
         },
         {
-          "command": "whodunit.openAtRevision",
+          "command": "whodunit.compareWithWorking",
           "when": "editorIsOpen"
         },
         {
-          "command": "whodunit.showCommit",
+          "command": "whodunit.openAtRevision",
           "when": "editorIsOpen"
         },
         {
@@ -138,7 +172,23 @@
           "when": "editorIsOpen"
         },
         {
-          "command": "whodunit.lineActions",
+          "command": "whodunit.lineHistory",
+          "when": "editorIsOpen"
+        },
+        {
+          "command": "whodunit.openOnRemote",
+          "when": "editorIsOpen"
+        },
+        {
+          "command": "whodunit.copyRemoteLink",
+          "when": "editorIsOpen"
+        },
+        {
+          "command": "whodunit.copySha",
+          "when": "editorIsOpen"
+        },
+        {
+          "command": "whodunit.copyMessage",
           "when": "editorIsOpen"
         }
       ]
@@ -156,6 +206,11 @@
           "default": "${author}, ${ago} • ${message}",
           "markdownDescription": "Inline blame template. Tokens: `${author}`, `${authorEmail}`, `${ago}`, `${agoOrDate}`, `${date}`, `${message}`, `${sha}`."
         },
+        "whodunit.inline.ageTint": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Tint the inline annotation by commit age (five buckets: under a day, a week, a month, a year, older). Colors: `whodunit.inlineBlame.age1` … `age5`."
+        },
         "whodunit.hover.enabled": {
           "type": "boolean",
           "default": true,
@@ -163,7 +218,10 @@
         },
         "whodunit.hover.trigger": {
           "type": "string",
-          "enum": ["annotation", "line"],
+          "enum": [
+            "annotation",
+            "line"
+          ],
           "default": "annotation",
           "markdownDescription": "`annotation`: show the card only when hovering the inline blame on the current line (falls back to the whole current line while inline blame is off). `line`: hover any line, anywhere."
         },
@@ -189,7 +247,12 @@
         },
         "whodunit.dateFormat": {
           "type": "string",
-          "enum": ["short", "medium", "long", "full"],
+          "enum": [
+            "short",
+            "medium",
+            "long",
+            "full"
+          ],
           "default": "medium",
           "markdownDescription": "Absolute date style used by `${date}`, `${agoOrDate}`, and the hover card."
         },
@@ -198,6 +261,16 @@
           "default": 60,
           "minimum": 4,
           "description": "Truncate commit messages to this many characters in inline blame and the status bar."
+        },
+        "whodunit.blame.ignoreWhitespace": {
+          "type": "boolean",
+          "default": false,
+          "description": "Ignore whitespace-only changes when blaming (git blame -w), so reformatting commits do not claim lines."
+        },
+        "whodunit.blame.ignoreRevsFile": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Honor a `.git-blame-ignore-revs` file at the repository root (git blame --ignore-revs-file)."
         }
       }
     },
@@ -211,6 +284,111 @@
           "highContrast": "#99999999",
           "highContrastLight": "#666666"
         }
+      },
+      {
+        "id": "whodunit.inlineBlame.age1",
+        "description": "Inline blame color for commits under a day (age tint).",
+        "defaults": {
+          "dark": "#f0c27a",
+          "light": "#a8641a",
+          "highContrast": "#ffd18a",
+          "highContrastLight": "#7a4400"
+        }
+      },
+      {
+        "id": "whodunit.inlineBlame.age2",
+        "description": "Inline blame color for commits under a week (age tint).",
+        "defaults": {
+          "dark": "#cfae7c",
+          "light": "#9a6a2a",
+          "highContrast": "#e6c48f",
+          "highContrastLight": "#6b4a10"
+        }
+      },
+      {
+        "id": "whodunit.inlineBlame.age3",
+        "description": "Inline blame color for commits under a month (age tint).",
+        "defaults": {
+          "dark": "#a99c86",
+          "light": "#8a7455",
+          "highContrast": "#cfc0a6",
+          "highContrastLight": "#5a4a30"
+        }
+      },
+      {
+        "id": "whodunit.inlineBlame.age4",
+        "description": "Inline blame color for commits under a year (age tint).",
+        "defaults": {
+          "dark": "#8b8b8b",
+          "light": "#7a7a7a",
+          "highContrast": "#b0b0b0",
+          "highContrastLight": "#4a4a4a"
+        }
+      },
+      {
+        "id": "whodunit.inlineBlame.age5",
+        "description": "Inline blame color for commits older (age tint).",
+        "defaults": {
+          "dark": "#6e6e72",
+          "light": "#8f8f95",
+          "highContrast": "#8f8f95",
+          "highContrastLight": "#5a5a60"
+        }
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "whodunit.commitMenu",
+        "key": "alt+shift+b",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "whodunit.lineHistory",
+        "key": "alt+shift+h",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "whodunit.olderRevision",
+        "key": "alt+shift+,",
+        "when": "resourceScheme == whodunit"
+      },
+      {
+        "command": "whodunit.newerRevision",
+        "key": "alt+shift+.",
+        "when": "resourceScheme == whodunit"
+      }
+    ],
+    "walkthroughs": [
+      {
+        "id": "whodunit.gettingStarted",
+        "title": "Get started with Whodunit",
+        "description": "Blame that stays out of your way: three things to try.",
+        "steps": [
+          {
+            "id": "hover",
+            "title": "Hover the inline blame",
+            "description": "Put the cursor on any line of a file in a git repository. The annotation at the end of the line is the blame; hover it for the card.\n[Open a file](command:workbench.action.quickOpen)",
+            "media": {
+              "markdown": "media/walkthrough/hover.md"
+            }
+          },
+          {
+            "id": "menu",
+            "title": "Open the commit menu",
+            "description": "Press ``alt+shift+b`` (or click the status bar blame) for everything about the commit: changes, files, remote link, copy, safe git actions.\n[Open the commit menu](command:whodunit.commitMenu)",
+            "media": {
+              "markdown": "media/walkthrough/menu.md"
+            }
+          },
+          {
+            "id": "history",
+            "title": "Walk history",
+            "description": "From any diff, use ← → in the title (``alt+shift+,`` / ``alt+shift+.``) to step through revisions, or ``alt+shift+h`` for the history of one line.\n[Line history](command:whodunit.lineHistory)",
+            "media": {
+              "markdown": "media/walkthrough/history.md"
+            }
+          }
+        ]
       }
     ]
   },

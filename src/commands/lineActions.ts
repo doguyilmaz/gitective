@@ -7,8 +7,8 @@ import { contextForDocument } from "../docContext";
 import { runGit } from "../git/run";
 import type { Services } from "../services";
 import { toRevUri } from "../uris";
-import { diffTitle, showCommitFiles } from "./commitPick";
-import { fileHistory } from "./history";
+import { openRevisionDocument } from "../language";
+import { diffTitle } from "./commitPick";
 
 export interface LineTarget {
   repoRoot: string;
@@ -118,66 +118,48 @@ export async function compareWithPrevious(services: Services, arg: unknown): Pro
       void vscode.window.showInformationMessage("Whodunit: the repository has no commits yet.");
       return;
     }
-    await vscode.commands.executeCommand(
-      "vscode.diff",
-      toRevUri({ repoRoot, sha: head, relPath }),
-      vscode.Uri.file(join(repoRoot, ...relPath.split("/"))),
-      diffTitle(relPath, shortSha(head), "working"),
-    );
+    await openWorkingDiff(repoRoot, relPath, head);
     return;
   }
 
   const left = target.previousSha
     ? toRevUri({ repoRoot, sha: target.previousSha, relPath: target.previousPath ?? relPath })
     : toRevUri({ repoRoot, sha: EMPTY_SHA, relPath });
+  const right = toRevUri({ repoRoot, sha, relPath });
+  await Promise.all([openRevisionDocument(left, relPath), openRevisionDocument(right, relPath)]);
   await vscode.commands.executeCommand(
     "vscode.diff",
     left,
-    toRevUri({ repoRoot, sha, relPath }),
+    right,
     diffTitle(relPath, target.previousSha ? shortSha(target.previousSha) : "added", shortSha(sha)),
   );
 }
 
-export async function showCommit(services: Services, arg: unknown): Promise<void> {
-  const target = await resolveTarget(services, arg);
-  if (!target) return noBlame();
-  if (isUncommittedSha(target.sha)) {
-    void vscode.window.showInformationMessage("Whodunit: the line is uncommitted.");
-    return;
-  }
-  await showCommitFiles(target.repoRoot, target.sha);
+async function openWorkingDiff(repoRoot: string, relPath: string, sha: string): Promise<void> {
+  const left = toRevUri({ repoRoot, sha, relPath });
+  await openRevisionDocument(left, relPath);
+  await vscode.commands.executeCommand(
+    "vscode.diff",
+    left,
+    vscode.Uri.file(join(repoRoot, ...relPath.split("/"))),
+    diffTitle(relPath, shortSha(sha), "working"),
+  );
 }
 
-export async function lineActions(services: Services, arg: unknown): Promise<void> {
+export async function compareWithWorking(services: Services, arg: unknown): Promise<void> {
   const target = await resolveTarget(services, arg);
   if (!target) return noBlame();
-
-  interface ActionItem extends vscode.QuickPickItem {
-    run: () => Promise<void>;
+  const { repoRoot, relPath } = target;
+  let sha = target.sha;
+  if (isUncommittedSha(sha)) {
+    try {
+      sha = (await runGit(["rev-parse", "HEAD"], { cwd: repoRoot })).trim();
+    } catch {
+      void vscode.window.showInformationMessage("Whodunit: the repository has no commits yet.");
+      return;
+    }
   }
-  const uncommitted = isUncommittedSha(target.sha);
-  const items: ActionItem[] = uncommitted
-    ? [
-        { label: "$(diff) Compare with HEAD", run: () => compareWithPrevious(services, target) },
-        { label: "$(history) File History", run: () => fileHistory(services, target) },
-      ]
-    : [
-        { label: "$(copy) Copy SHA", run: () => copySha(services, target) },
-        { label: "$(note) Copy Message", run: () => copyMessage(services, target) },
-        {
-          label: "$(diff) Compare with Previous",
-          run: () => compareWithPrevious(services, target),
-        },
-        { label: "$(go-to-file) Open at Revision", run: () => openAtRevision(services, target) },
-        { label: "$(git-commit) Show Commit", run: () => showCommit(services, target) },
-        { label: "$(history) File History", run: () => fileHistory(services, target) },
-      ];
-  const picked = await vscode.window.showQuickPick(items, {
-    placeHolder: uncommitted
-      ? `Line ${target.line} — uncommitted`
-      : `Line ${target.line} — ${shortSha(target.sha)}`,
-  });
-  if (picked) await picked.run();
+  await openWorkingDiff(repoRoot, relPath, sha);
 }
 
 export async function openAtRevision(services: Services, arg: unknown): Promise<void> {
@@ -188,7 +170,11 @@ export async function openAtRevision(services: Services, arg: unknown): Promise<
     return;
   }
   const uri = toRevUri({ repoRoot: target.repoRoot, sha: target.sha, relPath: target.relPath });
-  const doc = await vscode.workspace.openTextDocument(uri);
+  const doc = await openRevisionDocument(
+    uri,
+    target.relPath,
+    vscode.window.activeTextEditor?.document.languageId,
+  );
   const position = new vscode.Position(Math.max(0, target.origLine - 1), 0);
   await vscode.window.showTextDocument(doc, {
     selection: new vscode.Range(position, position),

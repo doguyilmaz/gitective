@@ -1,15 +1,17 @@
 import * as vscode from "vscode";
 import { reportError } from "../log";
 import type { Services } from "../services";
+import { commitMenu, inspectCommit, openChangeInCommit } from "./commitMenu";
 import { fileHistory } from "./history";
 import {
   compareWithPrevious,
+  compareWithWorking,
   copyMessage,
   copySha,
-  lineActions,
   openAtRevision,
-  showCommit,
 } from "./lineActions";
+import { lineHistory } from "./lineHistory";
+import { copyRemoteLink, openOnRemote } from "./remoteLinks";
 import { newerRevision, olderRevision } from "./revNav";
 import { searchCommits } from "./search";
 
@@ -31,9 +33,14 @@ const handlers: Record<string, Handler> = {
   "whodunit.copySha": copySha,
   "whodunit.copyMessage": copyMessage,
   "whodunit.compareWithPrevious": compareWithPrevious,
+  "whodunit.compareWithWorking": compareWithWorking,
   "whodunit.openAtRevision": openAtRevision,
-  "whodunit.showCommit": showCommit,
-  "whodunit.lineActions": lineActions,
+  "whodunit.commitMenu": commitMenu,
+  "whodunit.inspectCommit": inspectCommit,
+  "whodunit.openChangeInCommit": openChangeInCommit,
+  "whodunit.lineHistory": lineHistory,
+  "whodunit.openOnRemote": openOnRemote,
+  "whodunit.copyRemoteLink": copyRemoteLink,
   "whodunit.fileHistory": fileHistory,
   "whodunit.searchCommits": (services) => searchCommits(services),
   "whodunit.olderRevision": (services) => olderRevision(services),

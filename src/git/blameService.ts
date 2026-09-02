@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { parsePorcelain, type FileBlame } from "../core/blame";
 import { isValidSha } from "../core/sanitize";
 import { GitError, runGit } from "./run";
@@ -18,10 +20,27 @@ interface CacheEntry {
 
 const CACHE_LIMIT = 32;
 const MAX_CONTENTS_BYTES = 5 * 1024 * 1024;
+const IGNORE_REVS_FILE = ".git-blame-ignore-revs";
+
+export interface BlameOptions {
+  ignoreWhitespace: boolean;
+  ignoreRevsFile: boolean;
+}
 
 export class BlameService {
   private cache = new Map<string, CacheEntry>();
   private repoByKey = new Map<string, string>();
+  private options: BlameOptions = { ignoreWhitespace: false, ignoreRevsFile: true };
+
+  configure(options: BlameOptions): void {
+    if (
+      options.ignoreWhitespace === this.options.ignoreWhitespace &&
+      options.ignoreRevsFile === this.options.ignoreRevsFile
+    )
+      return;
+    this.options = options;
+    this.clear();
+  }
 
   // no caller-supplied AbortSignal: the promise is shared across consumers,
   // so one consumer's cancellation must not kill everyone's blame
@@ -55,19 +74,32 @@ export class BlameService {
     }
 
     const args = ["blame", "--porcelain"];
+    if (this.options.ignoreWhitespace) args.push("-w");
+    const revsFile = join(req.repoRoot, IGNORE_REVS_FILE);
+    const withRevs = this.options.ignoreRevsFile && existsSync(revsFile);
+    if (withRevs) args.push("--ignore-revs-file", IGNORE_REVS_FILE);
     if (req.sha !== undefined) args.push(req.sha);
     else args.push("--contents=-");
     args.push("--", req.relPath);
 
     try {
-      const output = await runGit(args, {
-        cwd: req.repoRoot,
-        stdin: contents,
-      });
-      return parsePorcelain(output);
+      return parsePorcelain(await runGit(args, { cwd: req.repoRoot, stdin: contents }));
     } catch (error) {
+      if (!(error instanceof GitError)) throw error;
+      // a malformed or missing ignore-revs file must not take blame down with it
+      if (withRevs && /ignore-revs|could not open|invalid object name/i.test(error.stderr)) {
+        const retry = args.filter(
+          (arg, i) => arg !== "--ignore-revs-file" && args[i - 1] !== "--ignore-revs-file",
+        );
+        try {
+          return parsePorcelain(await runGit(retry, { cwd: req.repoRoot, stdin: contents }));
+        } catch (retryError) {
+          if (retryError instanceof GitError && retryError.exitCode === 128) return undefined;
+          throw retryError;
+        }
+      }
       // exit 128 covers all expected can't-blame states: untracked, unborn HEAD, path absent in rev
-      if (error instanceof GitError && error.exitCode === 128) return undefined;
+      if (error.exitCode === 128) return undefined;
       throw error;
     }
   }

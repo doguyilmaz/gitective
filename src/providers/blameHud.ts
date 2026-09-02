@@ -1,30 +1,50 @@
 import * as vscode from "vscode";
 import type { WhodunitConfig } from "../config";
 import { getConfig } from "../config";
-import type { LineBlame } from "../core/blame";
-import { lineBlameAt } from "../core/blame";
+import { ageBucket } from "../core/age";
+import type { BlameCommit, LineBlame } from "../core/blame";
+import { lineBlameAt, UNCOMMITTED_SHA } from "../core/blame";
 import { templateValuesFor } from "../core/render";
 import { escapeCodicons } from "../core/sanitize";
 import type { TemplateValues } from "../core/template";
 import { renderTemplate, usesToken } from "../core/template";
-import { contextForDocument } from "../docContext";
+import { BLAMEABLE_SCHEMES, contextForDocument } from "../docContext";
 import { log } from "../log";
 import type { Services } from "../services";
-import { REV_SCHEME } from "../uris";
 
 const SELECTION_DEBOUNCE_MS = 75;
 const EDIT_DEBOUNCE_MS = 300;
+const LARGE_FILE_LINES = 2000;
+const LARGE_FILE_EDIT_DEBOUNCE_MS = 1200;
 const AGO_REFRESH_MS = 60_000;
+
+function decorationType(color: string): vscode.TextEditorDecorationType {
+  return vscode.window.createTextEditorDecorationType({
+    after: { color: new vscode.ThemeColor(color), margin: "0 0 0 3ch" },
+    rangeBehavior: vscode.DecorationRangeBehavior.ClosedOpen,
+  });
+}
+
+function uncommittedCommit(): BlameCommit {
+  return {
+    sha: UNCOMMITTED_SHA,
+    author: "You",
+    authorEmail: "",
+    authorTime: Date.now() / 1000,
+    summary: "",
+    boundary: false,
+    filename: "",
+    isUncommitted: true,
+  };
+}
 
 export class BlameHud implements vscode.Disposable {
   private readonly disposables: vscode.Disposable[] = [];
-  private readonly decoration = vscode.window.createTextEditorDecorationType({
-    after: {
-      color: new vscode.ThemeColor("whodunit.inlineBlame.foreground"),
-      margin: "0 0 0 3ch",
-    },
-    rangeBehavior: vscode.DecorationRangeBehavior.ClosedOpen,
-  });
+  private readonly plain = decorationType("whodunit.inlineBlame.foreground");
+  private readonly tinted = [1, 2, 3, 4, 5].map((n) =>
+    decorationType(`whodunit.inlineBlame.age${n}`),
+  );
+  private readonly applied = new WeakMap<vscode.TextEditor, vscode.TextEditorDecorationType>();
   private readonly statusItem = vscode.window.createStatusBarItem(
     "whodunit.blame",
     vscode.StatusBarAlignment.Right,
@@ -37,9 +57,10 @@ export class BlameHud implements vscode.Disposable {
 
   constructor(private readonly services: Services) {
     this.statusItem.name = "Whodunit Blame";
-    this.statusItem.command = "whodunit.lineActions";
+    this.statusItem.command = "whodunit.commitMenu";
     this.disposables.push(
-      this.decoration,
+      this.plain,
+      ...this.tinted,
       this.statusItem,
       vscode.window.onDidChangeActiveTextEditor((editor) => {
         if (!editor) this.statusItem.hide();
@@ -48,7 +69,7 @@ export class BlameHud implements vscode.Disposable {
       vscode.window.onDidChangeTextEditorSelection((event) =>
         this.schedule(event.textEditor, SELECTION_DEBOUNCE_MS),
       ),
-      vscode.workspace.onDidChangeTextDocument((event) => this.scheduleForDoc(event.document)),
+      vscode.workspace.onDidChangeTextDocument((event) => this.onEdit(event)),
     );
     this.agoTimer = setInterval(() => this.onAgoTick(), AGO_REFRESH_MS);
     if (vscode.window.activeTextEditor) void this.update(vscode.window.activeTextEditor);
@@ -70,11 +91,34 @@ export class BlameHud implements vscode.Disposable {
     );
   }
 
-  private scheduleForDoc(doc: vscode.TextDocument): void {
-    if (doc.uri.scheme !== "file" && doc.uri.scheme !== REV_SCHEME) return;
+  // while typing, the edited line is uncommitted by definition: show that at
+  // once and re-blame the file after the edit burst settles
+  private onEdit(event: vscode.TextDocumentChangeEvent): void {
+    const doc = event.document;
+    if (!(BLAMEABLE_SCHEMES as readonly string[]).includes(doc.uri.scheme)) return;
+    const delay = doc.lineCount > LARGE_FILE_LINES ? LARGE_FILE_EDIT_DEBOUNCE_MS : EDIT_DEBOUNCE_MS;
     for (const editor of vscode.window.visibleTextEditors) {
-      if (editor.document === doc) this.schedule(editor, EDIT_DEBOUNCE_MS);
+      if (editor.document !== doc) continue;
+      const line = editor.selection.active.line;
+      const touched = event.contentChanges.some(
+        (change) =>
+          change.range.start.line <= line &&
+          line <= change.range.end.line + change.text.split("\n").length - 1,
+      );
+      if (touched) this.showUncommitted(editor, line);
+      this.schedule(editor, delay);
     }
+  }
+
+  private showUncommitted(editor: vscode.TextEditor, line: number): void {
+    const cfg = getConfig();
+    if (!cfg.inlineEnabled || line >= editor.document.lineCount) return;
+    const values = templateValuesFor(uncommittedCommit(), {
+      maxLength: cfg.messageMaxLength,
+      locale: vscode.env.language,
+      dateStyle: cfg.dateStyle,
+    });
+    this.paint(editor, line, renderTemplate(cfg.inlineFormat, values), cfg.inlineAgeTint ? 1 : 0);
   }
 
   private onAgoTick(): void {
@@ -119,18 +163,33 @@ export class BlameHud implements vscode.Disposable {
     });
 
     if (cfg.inlineEnabled) {
-      const lineEnd = editor.document.lineAt(editor.selection.active.line).range.end;
-      editor.setDecorations(this.decoration, [
-        {
-          range: new vscode.Range(lineEnd, lineEnd),
-          renderOptions: { after: { contentText: renderTemplate(cfg.inlineFormat, values) } },
-        },
-      ]);
+      const bucket = cfg.inlineAgeTint ? ageBucket(found.commit.authorTime) : 0;
+      this.paint(
+        editor,
+        editor.selection.active.line,
+        renderTemplate(cfg.inlineFormat, values),
+        bucket,
+      );
     } else {
-      editor.setDecorations(this.decoration, []);
+      this.clearDecoration(editor);
     }
 
     if (isActive()) this.renderStatus(cfg, values, found);
+  }
+
+  private paint(editor: vscode.TextEditor, line: number, text: string, bucket: number): void {
+    const type =
+      bucket === 0 ? this.plain : (this.tinted[bucket - 1] as vscode.TextEditorDecorationType);
+    const previous = this.applied.get(editor);
+    if (previous && previous !== type) editor.setDecorations(previous, []);
+    const lineEnd = editor.document.lineAt(line).range.end;
+    editor.setDecorations(type, [
+      {
+        range: new vscode.Range(lineEnd, lineEnd),
+        renderOptions: { after: { contentText: text } },
+      },
+    ]);
+    this.applied.set(editor, type);
   }
 
   private renderStatus(cfg: WhodunitConfig, values: TemplateValues, found: LineBlame): void {
@@ -143,13 +202,19 @@ export class BlameHud implements vscode.Disposable {
     };
     this.statusItem.text = renderTemplate(cfg.statusBarFormat, safe);
     this.statusItem.tooltip = found.commit.isUncommitted
-      ? "Uncommitted changes"
-      : `${values.author}, ${values.date}\n${found.commit.summary}\n${found.commit.sha}`;
+      ? "Uncommitted changes · click for actions"
+      : `${values.author}, ${values.date}\n${found.commit.summary}\n${found.commit.sha}\n\nClick for the commit menu`;
     this.statusItem.show();
   }
 
+  private clearDecoration(editor: vscode.TextEditor): void {
+    const previous = this.applied.get(editor);
+    if (previous) editor.setDecorations(previous, []);
+    this.applied.delete(editor);
+  }
+
   private clear(editor: vscode.TextEditor, isActive: boolean): void {
-    editor.setDecorations(this.decoration, []);
+    this.clearDecoration(editor);
     if (isActive) this.statusItem.hide();
   }
 

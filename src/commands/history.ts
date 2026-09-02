@@ -5,7 +5,7 @@ import { contextForDocument } from "../docContext";
 import { runGit } from "../git/run";
 import type { Services } from "../services";
 import { toRevUri } from "../uris";
-import { commitItems, openDiffForChange, pickCommitAction } from "./commitPick";
+import { commitItems, openDiffForChange } from "./commitPick";
 import { isLineTarget } from "./lineActions";
 
 const HISTORY_LIMIT = 200;
@@ -79,8 +79,14 @@ export async function fileHistory(services: Services, arg: unknown): Promise<voi
       },
     },
     {
-      label: "$(list-selection) More Actions…",
-      run: () => pickCommitAction(scope.repoRoot, picked.entry),
+      label: "$(list-selection) Commit ⋯",
+      run: async () => {
+        await vscode.commands.executeCommand("whodunit.commitMenu", {
+          repoRoot: scope.repoRoot,
+          sha: picked.entry.sha,
+          relPath: change.path,
+        });
+      },
     },
   ];
   const action = await vscode.window.showQuickPick(items, {

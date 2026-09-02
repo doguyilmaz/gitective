@@ -100,3 +100,18 @@ describe("relPath", () => {
     expect(relPath(root, join(root, "a", "b.ts"))).toBe("a/b.ts");
   });
 });
+
+describe("line history via git log -L", () => {
+  test("lists every commit that touched one line, newest first, without patches", async () => {
+    const repo = await makeRepo();
+    const shas = [];
+    for (const [i, content] of ["a\nb\nc\n", "a\nB\nc\n", "a\nB2\nc\n"].entries()) {
+      shas.push(await commitFile(repo, "f.txt", content, `commit ${i + 1}`));
+    }
+    const { LOG_FORMAT, parseLogRecords } = await import("../src/core/gitLog");
+    const out = await runGit(["log", "-L2,2:f.txt", "--no-patch", `--format=${LOG_FORMAT}`], {
+      cwd: repo,
+    });
+    expect(parseLogRecords(out).map((e) => e.sha)).toEqual([...shas].reverse());
+  });
+});

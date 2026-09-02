@@ -90,9 +90,11 @@ export function renderDetails(model: HoverModel): string {
     ].join("\n\n");
   }
 
-  const line1 = [`<strong>${safeText(model.author)}</strong>`, model.ago, safeText(model.date)].join(
-    " &nbsp;·&nbsp; ",
-  );
+  const line1 = [
+    `<strong>${safeText(model.author)}</strong>`,
+    model.ago,
+    safeText(model.date),
+  ].join(" &nbsp;·&nbsp; ");
   const line2 = safeText(model.summary);
   const body = model.body ? [model.body.split("\n").map(safeText).join("<br>")] : [];
   const actions = [

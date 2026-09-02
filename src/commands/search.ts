@@ -7,7 +7,7 @@ import { GitError, runGit } from "../git/run";
 import { log } from "../log";
 import type { Services } from "../services";
 import type { CommitPickItem } from "./commitPick";
-import { commitItems, pickCommitAction } from "./commitPick";
+import { commitItems } from "./commitPick";
 
 const SEARCH_LIMIT = 50;
 const SEARCH_DEBOUNCE_MS = 250;
@@ -102,7 +102,7 @@ export async function searchCommits(services: Services): Promise<void> {
     const item = picker.selectedItems[0];
     if (!item) return;
     picker.hide();
-    void pickCommitAction(repoRoot, item.entry);
+    void vscode.commands.executeCommand("whodunit.commitMenu", { repoRoot, sha: item.entry.sha });
   });
   picker.onDidHide(() => {
     if (timer) clearTimeout(timer);
