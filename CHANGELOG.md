@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.0
+
+First Marketplace release under the `whodunit` identifier. Same feature set as 0.2.0.
+
 ## 0.2.0
 
 Whodunit stops mirroring GitLens and takes its own shape.
