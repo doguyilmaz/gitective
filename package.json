@@ -27,9 +27,16 @@
   "keywords": [
     "git",
     "blame",
+    "git blame",
     "annotate",
+    "annotations",
+    "authorship",
+    "commit",
     "history",
-    "diff"
+    "line history",
+    "diff",
+    "compare",
+    "gitlens"
   ],
   "extensionKind": [
     "workspace"
