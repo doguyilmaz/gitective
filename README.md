@@ -93,6 +93,7 @@ bun run test      # unit tests (bun)
 bun run test:vsc  # real VS Code host tests
 bun run check && bun run lint
 bun run package   # build the .vsix
+bun run icon      # regenerate media/icon.png (macOS, Swift toolchain)
 ```
 
 See `CONTRIBUTING.md`. Publishing: add `repository` to `package.json`, `bunx vsce login doguyilmaz`,

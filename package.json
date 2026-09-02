@@ -397,11 +397,12 @@
     "watch": "bun esbuild.mjs --watch",
     "check": "tsc --noEmit",
     "lint": "eslint .",
-    "format": "prettier --write src test scripts",
+    "format": "prettier --write src test",
     "test": "bun test",
     "test:vsc": "bun run build && vscode-test",
     "vscode:prepublish": "bun esbuild.mjs --production",
-    "package": "vsce package --allow-missing-repository"
+    "package": "vsce package --allow-missing-repository",
+    "icon": "swift scripts/icon.swift"
   },
   "devDependencies": {
     "@types/bun": "^1.2.0",
