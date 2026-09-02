@@ -1,6 +1,6 @@
 {
   "name": "whodunit-blame",
-  "displayName": "Whodunit",
+  "displayName": "Whodunit Blame",
   "description": "Git blame that stays out of your way: inline current-line blame, a calm hover card, a grouped commit menu, real diffs you can walk through, line history.",
   "version": "0.2.0",
   "publisher": "doguyilmaz",
