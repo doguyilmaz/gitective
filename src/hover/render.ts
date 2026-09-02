@@ -34,7 +34,10 @@ export interface HoverSignature {
 
 // vs code's own outline shield codicons, tinted through theme variables
 const SIGNATURE_ICON: Record<HoverSignatureStatus, { icon: string; color: string }> = {
-  verified: { icon: "workspace-trusted", color: "var(--vscode-textLink-foreground)" },
+  verified: {
+    icon: "workspace-trusted",
+    color: "var(--vscode-gitDecoration-addedResourceForeground)",
+  },
   unverified: { icon: "shield", color: "var(--vscode-descriptionForeground)" },
   bad: { icon: "workspace-untrusted", color: "var(--vscode-errorForeground)" },
 };
@@ -177,8 +180,10 @@ function actionRow(model: HoverModel): string {
   return groups.join(BAR);
 }
 
+// "line" (editor hover): summary beside the avatar, no stat.
+// "commit" (status bar hover): stat beside the avatar, message below it.
 export interface DetailsOptions {
-  showStat?: boolean;
+  variant?: "line" | "commit";
 }
 
 export function renderDetails(model: HoverModel, opts: DetailsOptions = {}): string {
@@ -200,10 +205,18 @@ export function renderDetails(model: HoverModel, opts: DetailsOptions = {}): str
   }
 
   const line1 = authorLine(model);
-  const line2 = safeText(model.summary);
+  const summary = safeText(model.summary);
   const body = model.body ? [model.body.split("\n").map(safeText).join("<br>")] : [];
-  const stat = opts.showStat && model.stat ? [statLine(model.stat)] : [];
-  return [header(model, line1, line2), ...body, ...stat, "---", actionRow(model)].join("\n\n");
+  if (opts.variant === "commit" && model.stat) {
+    return [
+      header(model, line1, statLine(model.stat)),
+      summary,
+      ...body,
+      "---",
+      actionRow(model),
+    ].join("\n\n");
+  }
+  return [header(model, line1, summary), ...body, "---", actionRow(model)].join("\n\n");
 }
 
 export function renderChanges(model: HoverModel, diffLine?: string): string {

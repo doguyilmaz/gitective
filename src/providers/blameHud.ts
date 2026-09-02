@@ -245,7 +245,7 @@ export class BlameHud implements vscode.Disposable {
       ]);
       if (seq !== this.statusSeq) return;
       this.statusItem.tooltip = trusted(
-        renderDetails(modelFor(ctx, found, info, avatar, remote), { showStat: true }),
+        renderDetails(modelFor(ctx, found, info, avatar, remote), { variant: "commit" }),
       );
     } catch (error) {
       log().warn(`status tooltip: ${error instanceof Error ? error.message : String(error)}`);

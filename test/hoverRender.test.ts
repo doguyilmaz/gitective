@@ -55,10 +55,14 @@ describe("renderDetails", () => {
     expect(renderDetails(model)).not.toContain("Open on");
   });
 
-  test("stat line only when asked for, colored", () => {
+  test("commit variant puts the stat beside the avatar and the message below", () => {
     expect(renderDetails(model)).not.toContain("files changed");
-    const out = renderDetails(model, { showStat: true });
-    expect(out).toContain("51 files changed, ");
+    const out = renderDetails(model, { variant: "commit" });
+    const statAt = out.indexOf("51 files changed, ");
+    const summaryAt = out.indexOf("fix: improve invoice API filtering");
+    expect(statAt).toBeGreaterThan(-1);
+    expect(statAt).toBeLessThan(summaryAt);
+    expect(out).toContain("<br>51 files changed, ");
     expect(out).toContain(
       '<span style="color:var(--vscode-gitDecoration-addedResourceForeground);">5675 insertions(+)</span>',
     );
@@ -100,7 +104,7 @@ describe("renderDetails", () => {
       '<strong>[Umut Topalak](https://github.com/umut "Open profile")</strong>',
     );
     expect(out).toContain(
-      '<span style="color:var(--vscode-textLink-foreground);" title="Signed by &quot;Umut&quot;, verified">$(workspace-trusted)</span>',
+      '<span style="color:var(--vscode-gitDecoration-addedResourceForeground);" title="Signed by &quot;Umut&quot;, verified">$(workspace-trusted)</span>',
     );
     expect(
       renderDetails({ ...model, signature: { status: "bad", label: "Bad signature" } }),
