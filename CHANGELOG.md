@@ -1,40 +1,24 @@
 # Changelog
 
-## 0.3.0
+## 1.0.0
 
-First Marketplace release under the `gitective` identifier. Same feature set as 0.2.0.
+First release of Gitective: git blame, investigated.
 
-## 0.2.0
-
-Gitective stops mirroring GitLens and takes its own shape.
-
-- Commit menu: one grouped QuickPick per commit (open, remote, history, copy, safe git actions:
-  branch, tag, revert, detached checkout). Opens from the hover, the status bar, `alt+shift+b`,
-  search and history picks.
-- Hover card redesigned: avatar beside author and message, plain-word actions, the blamed line's own
-  diff line in a copyable block, `Changes a ↔ b` footer with stat. Full commit message body shown.
-- Real avatars: GitHub (via the repo's origin) and Gravatar, cached locally for a week; the cached avatar shows offline, initials when nothing is cached. `gitective.hover.avatars: false` keeps everything local.
-- Line history (`git log -L`), Inspect Commit (read-only text view with side-by-side code lenses),
-  Changes with Working Tree, Open/Copy commit link for GitHub, GitLab and Bitbucket.
-- Revision tabs are named `file @ sha`, keep syntax highlighting, and carry a tooltip.
-- Blame inside VS Code's own Git diffs (`git:` documents).
-- `blame.ignoreWhitespace` and `.git-blame-ignore-revs` support.
-- Inline annotation tinted by commit age (five themable colors).
-- Typing-aware refresh: edited lines read as uncommitted immediately; large files re-blame lazily.
-- Keyboard: `alt+shift+b` commit menu, `alt+shift+h` line history, `alt+shift+,` / `.` older / newer revision.
-- Status bar moved right; click opens the commit menu; its tooltip is the full hover card with a settings link.
-- Signature shield in the hover (green when verified, muted when unverifiable, red when bad) and author names linked to GitHub profiles when known.
-- Hover action row is icons with tooltips plus `Open on GitHub`; colored files/insertions/deletions stat line in the status bar hover; gear opens Gitective settings; Gitective settings also surface in a `git.blame` settings search.
-- One-time offer to switch off VS Code's built-in blame status bar item to avoid duplicates.
-- Age tint palette made clearly readable (amber for today, gold for the week, tan for the month, gray beyond).
-
-## 0.1.0
-
-Initial release.
-
-- Inline current-line blame with customizable template
-- Blame hover card with actions and the introducing diff hunk
-- Compare with previous (rename-aware), recursive blame inside diff panes
-- Open file at revision
-- Status bar blame with line action menu
-- Commit search (message / `@author` / SHA) and file history QuickPicks
+- Inline blame on the current line, tinted by commit age; unsaved edits read as uncommitted at once.
+- Hover card: avatar (GitHub via the repo's origin, then Gravatar, cached; initials offline), author
+  linked to their GitHub profile, signature shield (green verified, muted unverifiable, red bad), dates,
+  full commit message, compact action row, the blamed line's own diff line in a copyable block, and a
+  `Changes a ↔ b` footer.
+- Commit menu (`alt+shift+b`, status bar click, `⋯` in the hover): changes in this file, vs the working
+  tree, all changed files, inspect commit; open or copy the commit link on GitHub, GitLab or Bitbucket;
+  file and line history; copy SHA or message; create branch, create tag, revert, checkout detached.
+- Real VS Code diffs, parent ↔ commit, with both panes blameable and ←/→ revision navigation
+  (`alt+shift+,` / `alt+shift+.`); snapshot tabs named `file @ sha` with syntax highlighting kept.
+- Inspect commit: read-only text document with header, message, stat and patch, plus side-by-side lenses.
+- Commit search (message, `@author`, SHA), file history, line history (`alt+shift+h`).
+- Blame inside VS Code's own Git diffs; `blame.ignoreWhitespace` and `.git-blame-ignore-revs` support.
+- Status bar blame at the left edge of the right-hand items; its hover is the full card with a colored
+  files/insertions/deletions line and a settings link. One-time offer to turn off VS Code's built-in
+  blame item to avoid duplicates.
+- Zero runtime dependencies, no telemetry; the only network use is avatars, off with
+  `gitective.hover.avatars: false`.
