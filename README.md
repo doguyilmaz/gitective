@@ -18,8 +18,8 @@ That's the whole extension: 27 KB, zero runtime dependencies.
   (copyable on its own) and a `Changes a ↔ b` footer. "You" means the commit email equals this repo's
   `user.email`; names are never matched.
 - **Status bar**: `You, 1 month ago` at the left edge of the right-hand items; hover for the same
-  card in commit layout: a colored `51 files changed, 5675 insertions(+), 401 deletions(-)` line under
-  the author, message below; click for the commit menu. VS Code's own built-in blame item shows up next
+  card plus a colored `51 files changed, 5675 insertions(+), 401 deletions(-)` line, click for the
+  commit menu. VS Code's own built-in blame item shows up next
   to it since 1.98; Whodunit offers once to turn the built-in one off.
 - **Commit menu** (`alt+shift+b`, status bar click, or `Commit ⋯`): open changes in this file, vs the
   working tree, all changed files, inspect commit; open or copy the commit link on GitHub, GitLab or

@@ -55,14 +55,13 @@ describe("renderDetails", () => {
     expect(renderDetails(model)).not.toContain("Open on");
   });
 
-  test("commit variant puts the stat beside the avatar and the message below", () => {
+  test("commit variant adds the stat line under the message", () => {
     expect(renderDetails(model)).not.toContain("files changed");
     const out = renderDetails(model, { variant: "commit" });
-    const statAt = out.indexOf("51 files changed, ");
-    const summaryAt = out.indexOf("fix: improve invoice API filtering");
-    expect(statAt).toBeGreaterThan(-1);
-    expect(statAt).toBeLessThan(summaryAt);
-    expect(out).toContain("<br>51 files changed, ");
+    expect(out.indexOf("fix: improve invoice API filtering")).toBeLessThan(
+      out.indexOf("51 files changed, "),
+    );
+    expect(out).toContain("51 files changed, ");
     expect(out).toContain(
       '<span style="color:var(--vscode-gitDecoration-addedResourceForeground);">5675 insertions(+)</span>',
     );

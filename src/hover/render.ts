@@ -180,8 +180,7 @@ function actionRow(model: HoverModel): string {
   return groups.join(BAR);
 }
 
-// "line" (editor hover): summary beside the avatar, no stat.
-// "commit" (status bar hover): stat beside the avatar, message below it.
+// "line" (editor hover): no stat. "commit" (status bar hover): stat line under the message.
 export interface DetailsOptions {
   variant?: "line" | "commit";
 }
