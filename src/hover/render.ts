@@ -206,16 +206,8 @@ export function renderDetails(model: HoverModel, opts: DetailsOptions = {}): str
   const line1 = authorLine(model);
   const summary = safeText(model.summary);
   const body = model.body ? [model.body.split("\n").map(safeText).join("<br>")] : [];
-  if (opts.variant === "commit" && model.stat) {
-    return [
-      header(model, line1, statLine(model.stat)),
-      summary,
-      ...body,
-      "---",
-      actionRow(model),
-    ].join("\n\n");
-  }
-  return [header(model, line1, summary), ...body, "---", actionRow(model)].join("\n\n");
+  const stat = opts.variant === "commit" && model.stat ? [statLine(model.stat)] : [];
+  return [header(model, line1, summary), ...body, ...stat, "---", actionRow(model)].join("\n\n");
 }
 
 export function renderChanges(model: HoverModel, diffLine?: string): string {
