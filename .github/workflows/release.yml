@@ -11,7 +11,8 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     env:
-      OVSX_PAT: ${{ secrets.OVSX_PAT }}
+      # only a flag is job-wide; the token itself stays scoped to its step
+      HAS_OVSX: ${{ secrets.OVSX_PAT != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -30,5 +31,7 @@ jobs:
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
       - name: Publish to Open VSX
-        if: ${{ env.OVSX_PAT != '' }}
+        if: ${{ env.HAS_OVSX == 'true' }}
         run: bunx ovsx publish *.vsix
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
