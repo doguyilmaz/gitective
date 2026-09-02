@@ -9,8 +9,8 @@ import UniformTypeIdentifiers
 //   swift scripts/icon.swift            # media/icon.png (256 px)
 //   swift scripts/icon.swift --sheet    # also a legibility sheet at 16–256 px
 //
-// The mark: a fingerprint whose ridges are git-style commit arcs, with the
-// identifying commit node at the core. "Who touched this line."
+// The mark: the feature itself. Code lines on a git rail; the current line is
+// lit and carries its amber blame annotation, its commit node filled on the rail.
 
 func rgb(_ hex: UInt32, _ alpha: CGFloat = 1) -> CGColor {
     CGColor(
@@ -23,9 +23,6 @@ func rgb(_ hex: UInt32, _ alpha: CGFloat = 1) -> CGColor {
 
 let bodyTop = rgb(0x241E3C)
 let bodyBottom = rgb(0x120F1F)
-let ridgeColor = rgb(0xF6C177)
-let ridgeDeepColor = rgb(0xE9A85B)
-let coreColor = rgb(0xFFD79A)
 
 func makeContext(_ size: Int) -> CGContext {
     let context = CGContext(
@@ -43,26 +40,39 @@ func makeContext(_ size: Int) -> CGContext {
     return context
 }
 
-struct Ridge {
-    let radius: CGFloat             // fraction of the side
-    let drop: CGFloat               // how far this ridge's centre sits below the core
-    let spans: [(CGFloat, CGFloat)] // degrees, counter-clockwise from 3 o'clock
+// The mark is the feature itself: three lines of code on a git rail, the
+// current line lit, with its blame annotation trailing in amber and its commit
+// node filled on the rail. Everything else stays muted so the annotation is
+// the hero at every size.
+let railColor = rgb(0x4A4563)
+let dimColor = rgb(0x6B6588)
+let codeColor = rgb(0xECE7F7)
+let annotationColor = rgb(0xF6C177)
+
+struct Row {
+    let y: CGFloat          // fraction of the side, y-up
+    let codeEnd: CGFloat    // fraction of the side
+    let lit: Bool
 }
 
-// A loop print: nested arches opening at the bottom, each ridge's centre a little
-// lower than the last so the gaps widen over the crown and the tails hang down.
-// One ridge carries a break, the way real prints do.
-let ridges: [Ridge] = [
-    Ridge(radius: 0.092, drop: 0.000, spans: [(-30, 205)]),
-    Ridge(radius: 0.172, drop: 0.018, spans: [(-52, 222)]),
-    Ridge(radius: 0.252, drop: 0.036, spans: [(-64, 58), (88, 232)]),
-    Ridge(radius: 0.332, drop: 0.054, spans: [(-76, 240)]),
+let rows: [Row] = [
+    Row(y: 0.70, codeEnd: 0.71, lit: false),
+    Row(y: 0.50, codeEnd: 0.55, lit: true),
+    Row(y: 0.30, codeEnd: 0.64, lit: false),
 ]
+let railX: CGFloat = 0.20
+let codeStart: CGFloat = 0.31
+let annotationStart: CGFloat = 0.615
+let annotationEnd: CGFloat = 0.815
+let barHeight: CGFloat = 0.092
 
-// prints are never symmetric: the whole loop leans, and each larger ridge's
-// centre also drifts a little to the left of the core
-let tiltDegrees: CGFloat = -13
-let driftPerRidge: CGFloat = 0.007
+func bar(_ context: CGContext, size: CGFloat, y: CGFloat, from: CGFloat, to: CGFloat, color: CGColor) {
+    let h = size * barHeight
+    let rect = CGRect(x: size * from, y: size * y - h / 2, width: size * (to - from), height: h)
+    context.setFillColor(color)
+    context.addPath(CGPath(roundedRect: rect, cornerWidth: h / 2, cornerHeight: h / 2, transform: nil))
+    context.fillPath()
+}
 
 func drawIcon(size: CGFloat) -> CGImage {
     let context = makeContext(Int(size))
@@ -86,63 +96,56 @@ func drawIcon(size: CGFloat) -> CGImage {
         options: []
     )
 
-    // faint inner glow behind the whorl so the ridges sit on something
-    let centre = CGPoint(x: size * 0.5, y: size * 0.56)
-    let glow = CGGradient(
+    // a soft amber wash behind the lit row, the way the editor highlights the current line
+    let lit = rows.first { $0.lit }!
+    let washHeight = size * 0.19
+    let wash = CGGradient(
         colorsSpace: CGColorSpaceCreateDeviceRGB(),
-        colors: [rgb(0xF6C177, 0.16), rgb(0xF6C177, 0)] as CFArray,
-        locations: [0, 1]
+        colors: [rgb(0xF6C177, 0), rgb(0xF6C177, 0.10), rgb(0xF6C177, 0)] as CFArray,
+        locations: [0, 0.5, 1]
     )!
-    context.drawRadialGradient(
-        glow,
-        startCenter: centre, startRadius: 0,
-        endCenter: centre, endRadius: size * 0.46,
+    context.saveGState()
+    context.clip(to: CGRect(x: body.minX, y: size * lit.y - washHeight / 2, width: body.width, height: washHeight))
+    context.drawLinearGradient(
+        wash,
+        start: CGPoint(x: body.minX, y: size * lit.y),
+        end: CGPoint(x: body.maxX, y: size * lit.y),
         options: []
     )
-
-    let weight = size * 0.056
-    context.setLineCap(.round)
-    context.setLineWidth(weight)
-    context.saveGState()
-    context.translateBy(x: centre.x, y: centre.y)
-    context.rotate(by: tiltDegrees * .pi / 180)
-    context.translateBy(x: -centre.x, y: -centre.y)
-    for (index, ridge) in ridges.enumerated() {
-        context.setStrokeColor(index == ridges.count - 1 ? ridgeDeepColor : ridgeColor)
-        let ridgeCentre = CGPoint(
-            x: centre.x - size * driftPerRidge * CGFloat(index),
-            y: centre.y - size * ridge.drop
-        )
-        for span in ridge.spans {
-            context.addArc(
-                center: ridgeCentre,
-                radius: size * ridge.radius,
-                startAngle: span.0 * .pi / 180,
-                endAngle: span.1 * .pi / 180,
-                clockwise: false
-            )
-            context.strokePath()
-        }
-    }
     context.restoreGState()
 
-    // the commit node: a filled core with a dark ring so it reads as a node,
-    // not as the fifth ridge
-    let coreRadius = size * 0.046
-    context.setFillColor(bodyBottom)
-    context.fillEllipse(in: CGRect(
-        x: centre.x - coreRadius - weight * 0.55,
-        y: centre.y - coreRadius - weight * 0.55,
-        width: (coreRadius + weight * 0.55) * 2,
-        height: (coreRadius + weight * 0.55) * 2
+    // the git rail with one node per line
+    let railWidth = size * 0.032
+    context.setFillColor(railColor)
+    context.addPath(CGPath(
+        roundedRect: CGRect(x: size * railX - railWidth / 2, y: size * 0.24, width: railWidth, height: size * 0.52),
+        cornerWidth: railWidth / 2, cornerHeight: railWidth / 2, transform: nil
     ))
-    context.setFillColor(coreColor)
-    context.fillEllipse(in: CGRect(
-        x: centre.x - coreRadius,
-        y: centre.y - coreRadius,
-        width: coreRadius * 2,
-        height: coreRadius * 2
-    ))
+    context.fillPath()
+
+    let nodeRadius = size * 0.048
+    for row in rows {
+        let centre = CGPoint(x: size * railX, y: size * row.y)
+        // dark ring separates the node from the rail
+        context.setFillColor(bodyBottom)
+        context.fillEllipse(in: CGRect(
+            x: centre.x - nodeRadius - size * 0.018, y: centre.y - nodeRadius - size * 0.018,
+            width: (nodeRadius + size * 0.018) * 2, height: (nodeRadius + size * 0.018) * 2
+        ))
+        context.setFillColor(row.lit ? annotationColor : dimColor)
+        context.fillEllipse(in: CGRect(
+            x: centre.x - nodeRadius, y: centre.y - nodeRadius,
+            width: nodeRadius * 2, height: nodeRadius * 2
+        ))
+    }
+
+    for row in rows {
+        bar(context, size: size, y: row.y, from: codeStart, to: row.codeEnd, color: row.lit ? codeColor : dimColor)
+        if row.lit {
+            bar(context, size: size, y: row.y, from: annotationStart, to: annotationEnd, color: annotationColor)
+        }
+    }
+
     context.restoreGState()
     return context.makeImage()!
 }
