@@ -55,7 +55,7 @@ describe("RepoResolver", () => {
   });
 
   test("returns undefined outside a repo", async () => {
-    const dir = await realpath(await mkdtemp(join(tmpdir(), "whodunit-norepo-")));
+    const dir = await realpath(await mkdtemp(join(tmpdir(), "gitective-norepo-")));
     await mkdir(join(dir, "sub"));
     expect(await new RepoResolver().repoForDir(join(dir, "sub"))).toBeUndefined();
   });
@@ -63,7 +63,7 @@ describe("RepoResolver", () => {
   test("resolves symlinked directories to the real repo path", async () => {
     const repo = await makeRepo();
     await commitFile(repo, "src/a.ts", "x\n", "init");
-    const linkParent = await realpath(await mkdtemp(join(tmpdir(), "whodunit-link-")));
+    const linkParent = await realpath(await mkdtemp(join(tmpdir(), "gitective-link-")));
     const link = join(linkParent, "link");
     await symlink(repo, link);
     const info = await new RepoResolver().repoForDir(join(link, "src"));
@@ -73,7 +73,7 @@ describe("RepoResolver", () => {
   });
 
   test("expired negative results are re-probed", async () => {
-    const dir = await realpath(await mkdtemp(join(tmpdir(), "whodunit-late-")));
+    const dir = await realpath(await mkdtemp(join(tmpdir(), "gitective-late-")));
     const resolver = new RepoResolver(undefined, 0);
     expect(await resolver.repoForDir(dir)).toBeUndefined();
     await git(dir, "init", "-qb", "main");

@@ -1,6 +1,6 @@
-# Contributing to Whodunit
+# Contributing to Gitective
 
-Whodunit is small on purpose. The bar for a change is "does this help someone understand who
+Gitective is small on purpose. The bar for a change is "does this help someone understand who
 changed a line and why, without getting in their way?" Sidebars, graphs, and anything that needs
 an account are out of scope.
 

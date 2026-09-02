@@ -13,7 +13,7 @@ export async function git(cwd: string, ...args: string[]): Promise<string> {
 }
 
 export async function makeRepo(): Promise<string> {
-  const dir = await realpath(await mkdtemp(join(tmpdir(), "whodunit-")));
+  const dir = await realpath(await mkdtemp(join(tmpdir(), "gitective-")));
   await git(dir, "init", "-q", "-b", "main");
   await git(dir, "config", "user.name", "Test Author");
   await git(dir, "config", "user.email", "test@example.com");

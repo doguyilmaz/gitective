@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "whodunit",
+      "name": "gitective",
       "devDependencies": {
         "@types/bun": "^1.2.0",
         "@types/node": "^20.0.0",

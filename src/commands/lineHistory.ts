@@ -16,7 +16,7 @@ export async function lineHistory(services: Services, arg: unknown): Promise<voi
   const relPath = ctx?.req.relPath ?? (isLineTarget(arg) ? arg.relPath : undefined);
   if (!repoRoot || !relPath || line === undefined) {
     void vscode.window.showInformationMessage(
-      "Whodunit: put the cursor on a line inside a git repository first.",
+      "Gitective: put the cursor on a line inside a git repository first.",
     );
     return;
   }
@@ -32,7 +32,7 @@ export async function lineHistory(services: Services, arg: unknown): Promise<voi
   if (ctx?.isRevision && ctx.req.sha) args.push(ctx.req.sha);
   const entries = parseLogRecords(await runGit(args, { cwd: repoRoot }));
   if (entries.length === 0) {
-    void vscode.window.showInformationMessage("Whodunit: no history for this line yet.");
+    void vscode.window.showInformationMessage("Gitective: no history for this line yet.");
     return;
   }
 
@@ -43,7 +43,7 @@ export async function lineHistory(services: Services, arg: unknown): Promise<voi
     matchOnDetail: true,
   });
   if (!picked) return;
-  await vscode.commands.executeCommand("whodunit.commitMenu", {
+  await vscode.commands.executeCommand("gitective.commitMenu", {
     repoRoot,
     sha: picked.entry.sha,
     relPath: picked.entry.changes?.[0]?.path ?? relPath,

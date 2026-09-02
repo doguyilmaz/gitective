@@ -27,7 +27,7 @@ export async function fileHistory(services: Services, arg: unknown): Promise<voi
   const scope = await historyScope(services, arg);
   if (!scope) {
     void vscode.window.showInformationMessage(
-      "Whodunit: open a file inside a git repository first.",
+      "Gitective: open a file inside a git repository first.",
     );
     return;
   }
@@ -47,7 +47,7 @@ export async function fileHistory(services: Services, arg: unknown): Promise<voi
   );
   const entries = parseLogRecords(output);
   if (entries.length === 0) {
-    void vscode.window.showInformationMessage("Whodunit: no history for this file.");
+    void vscode.window.showInformationMessage("Gitective: no history for this file.");
     return;
   }
 
@@ -81,7 +81,7 @@ export async function fileHistory(services: Services, arg: unknown): Promise<voi
     {
       label: "$(list-selection) Commit ⋯",
       run: async () => {
-        await vscode.commands.executeCommand("whodunit.commitMenu", {
+        await vscode.commands.executeCommand("gitective.commitMenu", {
           repoRoot: scope.repoRoot,
           sha: picked.entry.sha,
           relPath: change.path,

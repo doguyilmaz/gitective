@@ -174,7 +174,7 @@ function actionRow(model: HoverModel): string {
   groups.push(
     [
       link("$(ellipsis)", model.links.menu, "Commit menu: files, working tree, git actions"),
-      link("$(gear)", model.links.settings, "Whodunit settings"),
+      link("$(gear)", model.links.settings, "Gitective settings"),
     ].join(GAP),
   );
   return groups.join(BAR);
@@ -194,7 +194,7 @@ export function renderDetails(model: HoverModel, opts: DetailsOptions = {}): str
         "Diff the working file against HEAD",
       ),
       link("$(history)", model.links.history, "File history"),
-      link("$(gear)", model.links.settings, "Whodunit settings"),
+      link("$(gear)", model.links.settings, "Gitective settings"),
     ].join(GAP);
     return [
       header(model, "<strong>You</strong>", "<em>uncommitted changes</em>"),

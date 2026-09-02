@@ -40,7 +40,7 @@ async function historyChain(repoRoot: string, relPath: string, from?: string): P
 async function step(services: Services, direction: "older" | "newer"): Promise<void> {
   const active = activeRevisionRef();
   if (!active) {
-    void vscode.window.showInformationMessage("Whodunit: open a Whodunit revision or diff first.");
+    void vscode.window.showInformationMessage("Gitective: open a Gitective revision or diff first.");
     return;
   }
   const { ref, tab } = active;
@@ -51,7 +51,7 @@ async function step(services: Services, direction: "older" | "newer"): Promise<v
   let index = entries.findIndex((entry) => entry.sha === ref.sha);
   if (index === -1) {
     if (direction === "newer") {
-      void vscode.window.showInformationMessage("Whodunit: no newer revision found for this file.");
+      void vscode.window.showInformationMessage("Gitective: no newer revision found for this file.");
       return;
     }
     entries = await historyChain(ref.repoRoot, ref.relPath, ref.sha);
@@ -62,8 +62,8 @@ async function step(services: Services, direction: "older" | "newer"): Promise<v
   if (!target) {
     void vscode.window.showInformationMessage(
       direction === "older"
-        ? "Whodunit: already at the oldest revision."
-        : "Whodunit: already at the newest revision.",
+        ? "Gitective: already at the oldest revision."
+        : "Gitective: already at the newest revision.",
     );
     return;
   }

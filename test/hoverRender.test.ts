@@ -8,15 +8,15 @@ import {
 } from "../src/hover/render";
 
 const links = {
-  copySha: "command:whodunit.copySha?%5B%5D",
-  inspect: "command:whodunit.inspectCommit?%5B%5D",
-  changes: "command:whodunit.compareWithPrevious?%5B%5D",
-  changesWorking: "command:whodunit.compareWithWorking?%5B%5D",
-  open: "command:whodunit.openAtRevision?%5B%5D",
-  history: "command:whodunit.fileHistory?%5B%5D",
-  lineHistory: "command:whodunit.lineHistory?%5B%5D",
-  menu: "command:whodunit.commitMenu?%5B%5D",
-  settings: "command:workbench.action.openSettings?%5B%22whodunit%22%5D",
+  copySha: "command:gitective.copySha?%5B%5D",
+  inspect: "command:gitective.inspectCommit?%5B%5D",
+  changes: "command:gitective.compareWithPrevious?%5B%5D",
+  changesWorking: "command:gitective.compareWithWorking?%5B%5D",
+  open: "command:gitective.openAtRevision?%5B%5D",
+  history: "command:gitective.fileHistory?%5B%5D",
+  lineHistory: "command:gitective.lineHistory?%5B%5D",
+  menu: "command:gitective.commitMenu?%5B%5D",
+  settings: "command:workbench.action.openSettings?%5B%22gitective%22%5D",
 };
 
 const model: HoverModel = {
@@ -38,15 +38,15 @@ describe("renderDetails", () => {
       ...model,
       remote: { label: "GitHub", url: "https://github.com/a/b/commit/282c899", icon: "github" },
     });
-    expect(out).toContain("[$(git-commit) 282c899](command:whodunit.inspectCommit");
-    expect(out).toContain('[$(copy)](command:whodunit.copySha?%5B%5D "Copy SHA")');
+    expect(out).toContain("[$(git-commit) 282c899](command:gitective.inspectCommit");
+    expect(out).toContain('[$(copy)](command:gitective.copySha?%5B%5D "Copy SHA")');
     expect(out).toContain(
-      '[$(diff)](command:whodunit.compareWithPrevious?%5B%5D "Changes 8652fd9 ↔ 282c899")',
+      '[$(diff)](command:gitective.compareWithPrevious?%5B%5D "Changes 8652fd9 ↔ 282c899")',
     );
-    expect(out).toContain("[$(history)](command:whodunit.fileHistory");
-    expect(out).toContain("[$(list-ordered)](command:whodunit.lineHistory");
+    expect(out).toContain("[$(history)](command:gitective.fileHistory");
+    expect(out).toContain("[$(list-ordered)](command:gitective.lineHistory");
     expect(out).toContain("[$(github) Open on GitHub](https://github.com/a/b/commit/282c899");
-    expect(out).toContain("[$(ellipsis)](command:whodunit.commitMenu");
+    expect(out).toContain("[$(ellipsis)](command:gitective.commitMenu");
     expect(out).toContain("[$(gear)](command:workbench.action.openSettings");
     expect(out).not.toContain("Open file @");
   });
@@ -156,9 +156,9 @@ describe("renderChanges", () => {
 
 describe("commandUri", () => {
   test("encodes parens so markdown links survive", () => {
-    const uri = commandUri("whodunit.copySha", { repoRoot: "/x/proj (old)", sha: "a".repeat(40) });
+    const uri = commandUri("gitective.copySha", { repoRoot: "/x/proj (old)", sha: "a".repeat(40) });
     expect(uri).not.toContain("(");
     expect(uri).not.toContain(")");
-    expect(uri.startsWith("command:whodunit.copySha?")).toBe(true);
+    expect(uri.startsWith("command:gitective.copySha?")).toBe(true);
   });
 });

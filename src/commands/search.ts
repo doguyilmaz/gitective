@@ -68,7 +68,7 @@ async function queryCommits(repoRoot: string, value: string): Promise<LogEntry[]
 export async function searchCommits(services: Services): Promise<void> {
   const repoRoot = await currentRepoRoot(services);
   if (!repoRoot) {
-    void vscode.window.showInformationMessage("Whodunit: no git repository found.");
+    void vscode.window.showInformationMessage("Gitective: no git repository found.");
     return;
   }
 
@@ -102,7 +102,7 @@ export async function searchCommits(services: Services): Promise<void> {
     const item = picker.selectedItems[0];
     if (!item) return;
     picker.hide();
-    void vscode.commands.executeCommand("whodunit.commitMenu", { repoRoot, sha: item.entry.sha });
+    void vscode.commands.executeCommand("gitective.commitMenu", { repoRoot, sha: item.entry.sha });
   });
   picker.onDidHide(() => {
     if (timer) clearTimeout(timer);

@@ -23,7 +23,7 @@ export class RevisionContentProvider implements vscode.TextDocumentContentProvid
       });
     } catch (error) {
       log().error(`revision provider: ${error instanceof Error ? error.message : String(error)}`);
-      throw new Error(`Whodunit could not load ${ref.relPath} at ${ref.sha.slice(0, 7)}.`);
+      throw new Error(`Gitective could not load ${ref.relPath} at ${ref.sha.slice(0, 7)}.`);
     }
   }
 }

@@ -3,11 +3,11 @@ import { commitUrl, parseRemote } from "../src/core/remote";
 
 describe("parseRemote", () => {
   test("github, gitlab, bitbucket in https, ssh and scp forms", () => {
-    expect(parseRemote("https://github.com/doguyilmaz/whodunit.git")).toEqual({
+    expect(parseRemote("https://github.com/doguyilmaz/gitective.git")).toEqual({
       host: "github",
       owner: "doguyilmaz",
-      repo: "whodunit",
-      webBase: "https://github.com/doguyilmaz/whodunit",
+      repo: "gitective",
+      webBase: "https://github.com/doguyilmaz/gitective",
     });
     expect(parseRemote("git@gitlab.com:group/proj.git")?.host).toBe("gitlab");
     expect(parseRemote("ssh://git@bitbucket.org/team/repo.git")?.host).toBe("bitbucket");

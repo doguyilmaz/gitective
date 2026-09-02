@@ -1,8 +1,8 @@
-# Whodunit
+# Gitective
 
 Git blame that stays out of your way.
 
-Whodunit shows who last touched the line you're on and lets you act on it, without sidebars,
+Gitective shows who last touched the line you're on and lets you act on it, without sidebars,
 graphs, accounts, or telemetry. Inline blame on the current line, a calm hover card, one grouped
 commit menu, real VS Code diffs you can walk through revision by revision, and line history.
 That's the whole extension: under 100 KB, zero runtime dependencies.
@@ -20,7 +20,7 @@ That's the whole extension: under 100 KB, zero runtime dependencies.
 - **Status bar**: `You, 1 month ago` at the left edge of the right-hand items; hover for the same
   card plus a colored `51 files changed, 5675 insertions(+), 401 deletions(-)` line, click for the
   commit menu. VS Code's own built-in blame item shows up next
-  to it since 1.98; Whodunit offers once to turn the built-in one off.
+  to it since 1.98; Gitective offers once to turn the built-in one off.
 - **Commit menu** (`alt+shift+b`, status bar click, or `Commit ⋯`): open changes in this file, vs the
   working tree, all changed files, inspect commit; open or copy the commit link on GitHub, GitLab or
   Bitbucket; file and line history; copy SHA or message; and four safe git actions: create branch,
@@ -39,25 +39,25 @@ That's the whole extension: under 100 KB, zero runtime dependencies.
 No telemetry. Git runs locally. The only network use is author avatars: GitHub (via the repo's
 `origin`, reusing an existing VS Code GitHub session, never prompting) then Gravatar. Avatars are
 cached locally for a week, the last cached one is shown offline, and initials are drawn when nothing
-is cached. Set `whodunit.hover.avatars` to `false` and Whodunit never touches the network.
+is cached. Set `gitective.hover.avatars` to `false` and Gitective never touches the network.
 
 ## Settings
 
 | Setting | Default | Description |
 | --- | --- | --- |
-| `whodunit.inline.enabled` | `true` | Inline blame for the current line |
-| `whodunit.inline.format` | `${author}, ${ago} • ${message}` | Inline template |
-| `whodunit.inline.ageTint` | `true` | Tint the annotation by commit age (`whodunit.inlineBlame.age1…age5`) |
-| `whodunit.hover.enabled` | `true` | Blame hover card |
-| `whodunit.hover.trigger` | `annotation` | Card over the inline annotation only, or `line` for any line |
-| `whodunit.hover.avatars` | `true` | Author avatars (GitHub, Gravatar; cached; initials offline) |
-| `whodunit.hover.showChanges` | `true` | The blamed line's own diff line in the hover |
-| `whodunit.statusBar.enabled` | `true` | Status bar blame (click opens the commit menu) |
-| `whodunit.statusBar.format` | `$(git-commit) ${author}, ${ago}` | Status bar template (codicons allowed) |
-| `whodunit.dateFormat` | `medium` | Absolute date style for `${date}`, `${agoOrDate}`, hover |
-| `whodunit.message.maxLength` | `60` | Message truncation for inline/status bar |
-| `whodunit.blame.ignoreWhitespace` | `false` | `git blame -w`: reformatting commits stop claiming lines |
-| `whodunit.blame.ignoreRevsFile` | `true` | Honor `.git-blame-ignore-revs` at the repo root |
+| `gitective.inline.enabled` | `true` | Inline blame for the current line |
+| `gitective.inline.format` | `${author}, ${ago} • ${message}` | Inline template |
+| `gitective.inline.ageTint` | `true` | Tint the annotation by commit age (`gitective.inlineBlame.age1…age5`) |
+| `gitective.hover.enabled` | `true` | Blame hover card |
+| `gitective.hover.trigger` | `annotation` | Card over the inline annotation only, or `line` for any line |
+| `gitective.hover.avatars` | `true` | Author avatars (GitHub, Gravatar; cached; initials offline) |
+| `gitective.hover.showChanges` | `true` | The blamed line's own diff line in the hover |
+| `gitective.statusBar.enabled` | `true` | Status bar blame (click opens the commit menu) |
+| `gitective.statusBar.format` | `$(git-commit) ${author}, ${ago}` | Status bar template (codicons allowed) |
+| `gitective.dateFormat` | `medium` | Absolute date style for `${date}`, `${agoOrDate}`, hover |
+| `gitective.message.maxLength` | `60` | Message truncation for inline/status bar |
+| `gitective.blame.ignoreWhitespace` | `false` | `git blame -w`: reformatting commits stop claiming lines |
+| `gitective.blame.ignoreRevsFile` | `true` | Honor `.git-blame-ignore-revs` at the repo root |
 
 Template tokens: `${author}` `${authorEmail}` `${ago}` `${agoOrDate}` `${date}` `${message}` `${sha}`
 (`${agoOrDate}` is relative under 30 days, an absolute date after).
@@ -68,11 +68,11 @@ Template tokens: `${author}` `${authorEmail}` `${ago}` `${agoOrDate}` `${date}` 
 | --- | --- | --- |
 | `alt+shift+b` | Commit menu for the current line | editor focused |
 | `alt+shift+h` | Line history | editor focused |
-| `alt+shift+,` / `alt+shift+.` | Older / newer revision | a Whodunit revision or diff tab is active |
+| `alt+shift+,` / `alt+shift+.` | Older / newer revision | a Gitective revision or diff tab is active |
 
 ## Commands
 
-`Whodunit:` Commit Menu for Current Line · Inspect Commit · Changes with Previous Revision ·
+`Gitective:` Commit Menu for Current Line · Inspect Commit · Changes with Previous Revision ·
 Changes with Working Tree · Open File at Revision · File History · Line History · Search Commits ·
 Open Commit on Remote · Copy Commit Link · Copy Commit SHA · Copy Commit Message · Older / Newer
 Revision · Toggle Inline Blame.
@@ -80,7 +80,7 @@ Revision · Toggle Inline Blame.
 ## Notes
 
 - Requires `git` on your PATH. Files larger than 5 MB are not blamed.
-- Untrusted and virtual workspaces are not supported (Whodunit runs git in your workspace).
+- Untrusted and virtual workspaces are not supported (Gitective runs git in your workspace).
 - Not in scope, on purpose: whole-file gutter blame, sidebar views, commit graph, rebase/reset,
   PR/issue integrations, AI.
 

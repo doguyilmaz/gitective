@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { AvatarService } from "../avatarService";
-import type { WhodunitConfig } from "../config";
+import type { GitectiveConfig } from "../config";
 import { getConfig } from "../config";
 import { ageBucket } from "../core/age";
 import type { BlameCommit, LineBlame } from "../core/blame";
@@ -44,13 +44,13 @@ function uncommittedCommit(): BlameCommit {
 
 export class BlameHud implements vscode.Disposable {
   private readonly disposables: vscode.Disposable[] = [];
-  private readonly plain = decorationType("whodunit.inlineBlame.foreground");
+  private readonly plain = decorationType("gitective.inlineBlame.foreground");
   private readonly tinted = [1, 2, 3, 4, 5].map((n) =>
-    decorationType(`whodunit.inlineBlame.age${n}`),
+    decorationType(`gitective.inlineBlame.age${n}`),
   );
   private readonly applied = new WeakMap<vscode.TextEditor, vscode.TextEditorDecorationType>();
   private readonly statusItem = vscode.window.createStatusBarItem(
-    "whodunit.blame",
+    "gitective.blame",
     vscode.StatusBarAlignment.Right,
     1000,
   );
@@ -63,8 +63,8 @@ export class BlameHud implements vscode.Disposable {
 
   constructor(private readonly services: Services) {
     this.avatars = new AvatarService(services.remotes, services.avatarCache);
-    this.statusItem.name = "Whodunit";
-    this.statusItem.command = "whodunit.commitMenu";
+    this.statusItem.name = "Gitective";
+    this.statusItem.command = "gitective.commitMenu";
     this.disposables.push(
       this.plain,
       ...this.tinted,
@@ -200,7 +200,7 @@ export class BlameHud implements vscode.Disposable {
   }
 
   private renderStatus(
-    cfg: WhodunitConfig,
+    cfg: GitectiveConfig,
     values: TemplateValues,
     found: LineBlame,
     ctx: DocContext,
@@ -223,7 +223,7 @@ export class BlameHud implements vscode.Disposable {
   // the same card as the hover, rendered into the status bar tooltip once the
   // avatar and commit details are in; a newer line cancels a slower older one
   private async decorateStatus(
-    cfg: WhodunitConfig,
+    cfg: GitectiveConfig,
     found: LineBlame,
     ctx: DocContext,
   ): Promise<void> {

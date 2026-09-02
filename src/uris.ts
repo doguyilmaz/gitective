@@ -3,7 +3,7 @@ import * as vscode from "vscode";
 import { decodeRevQuery, EMPTY_SHA, encodeRevQuery, type RevRef } from "./core/revUri";
 import { shortSha } from "./core/sanitize";
 
-export const REV_SCHEME = "whodunit";
+export const REV_SCHEME = "gitective";
 
 // tab label is the last path segment, so it names the revision explicitly
 export function toRevUri(ref: RevRef): vscode.Uri {

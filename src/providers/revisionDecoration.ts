@@ -9,6 +9,6 @@ export class RevisionDecorationProvider implements vscode.FileDecorationProvider
     const ref = fromRevUri(uri);
     if (!ref) return undefined;
     const label = ref.sha === EMPTY_SHA ? "before this file existed" : `at ${shortSha(ref.sha)}`;
-    return { tooltip: `Whodunit snapshot ${label} (read-only)` };
+    return { tooltip: `Gitective snapshot ${label} (read-only)` };
   }
 }

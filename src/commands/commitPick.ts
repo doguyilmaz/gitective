@@ -84,7 +84,7 @@ export async function showCommitFiles(repoRoot: string, sha: string): Promise<vo
   });
   const changes = parseNameStatus(output);
   if (changes.length === 0) {
-    void vscode.window.showInformationMessage("Whodunit: no file changes in this commit.");
+    void vscode.window.showInformationMessage("Gitective: no file changes in this commit.");
     return;
   }
   interface FileItem extends vscode.QuickPickItem {

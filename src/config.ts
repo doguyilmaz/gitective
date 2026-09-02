@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import type { DateStyle } from "./core/time";
 
-export interface WhodunitConfig {
+export interface GitectiveConfig {
   inlineEnabled: boolean;
   inlineFormat: string;
   inlineAgeTint: boolean;
@@ -17,8 +17,8 @@ export interface WhodunitConfig {
   blameIgnoreRevsFile: boolean;
 }
 
-export function getConfig(): WhodunitConfig {
-  const config = vscode.workspace.getConfiguration("whodunit");
+export function getConfig(): GitectiveConfig {
+  const config = vscode.workspace.getConfiguration("gitective");
   return {
     inlineEnabled: config.get("inline.enabled", true),
     inlineFormat: config.get("inline.format", "${author}, ${ago} • ${message}"),

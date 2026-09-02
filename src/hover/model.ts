@@ -15,14 +15,14 @@ import { commitUrl, hostLabel, type Remote } from "../core/remote";
 import { commandUri, type HoverModel } from "./render";
 
 export const TRUSTED_COMMANDS = [
-  "whodunit.copySha",
-  "whodunit.compareWithPrevious",
-  "whodunit.compareWithWorking",
-  "whodunit.openAtRevision",
-  "whodunit.fileHistory",
-  "whodunit.lineHistory",
-  "whodunit.commitMenu",
-  "whodunit.inspectCommit",
+  "gitective.copySha",
+  "gitective.compareWithPrevious",
+  "gitective.compareWithWorking",
+  "gitective.openAtRevision",
+  "gitective.fileHistory",
+  "gitective.lineHistory",
+  "gitective.commitMenu",
+  "gitective.inspectCommit",
   "workbench.action.openSettings",
 ];
 
@@ -127,15 +127,15 @@ export function modelFor(
       icon: remote.host === "github" ? "github" : "link-external",
     },
     links: {
-      copySha: commandUri("whodunit.copySha", target),
-      inspect: commandUri("whodunit.inspectCommit", { repoRoot: target.repoRoot, sha: target.sha }),
-      settings: commandUri("workbench.action.openSettings", "whodunit"),
-      changes: commandUri("whodunit.compareWithPrevious", target),
-      changesWorking: commandUri("whodunit.compareWithWorking", target),
-      open: commandUri("whodunit.openAtRevision", target),
-      history: commandUri("whodunit.fileHistory", target),
-      lineHistory: commandUri("whodunit.lineHistory", target),
-      menu: commandUri("whodunit.commitMenu", target),
+      copySha: commandUri("gitective.copySha", target),
+      inspect: commandUri("gitective.inspectCommit", { repoRoot: target.repoRoot, sha: target.sha }),
+      settings: commandUri("workbench.action.openSettings", "gitective"),
+      changes: commandUri("gitective.compareWithPrevious", target),
+      changesWorking: commandUri("gitective.compareWithWorking", target),
+      open: commandUri("gitective.openAtRevision", target),
+      history: commandUri("gitective.fileHistory", target),
+      lineHistory: commandUri("gitective.lineHistory", target),
+      menu: commandUri("gitective.commitMenu", target),
     },
   };
 }

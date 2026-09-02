@@ -1,18 +1,18 @@
 {
-  "name": "whodunit",
-  "displayName": "Whodunit",
-  "description": "Git blame that stays out of your way: inline current-line blame, a calm hover card, a grouped commit menu, real diffs you can walk through, line history.",
+  "name": "gitective",
+  "displayName": "Gitective",
+  "description": "Git blame, investigated: inline current-line blame, a calm hover card, a grouped commit menu, real diffs you can walk through, line history.",
   "version": "0.3.0",
   "publisher": "doguyilmaz",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/doguyilmaz/whodunit.git"
+    "url": "https://github.com/doguyilmaz/gitective.git"
   },
   "bugs": {
-    "url": "https://github.com/doguyilmaz/whodunit/issues"
+    "url": "https://github.com/doguyilmaz/gitective/issues"
   },
-  "homepage": "https://github.com/doguyilmaz/whodunit#readme",
+  "homepage": "https://github.com/doguyilmaz/gitective#readme",
   "icon": "media/icon.png",
   "engines": {
     "vscode": "^1.85.0"
@@ -33,11 +33,11 @@
   "capabilities": {
     "untrustedWorkspaces": {
       "supported": false,
-      "description": "Whodunit runs git in your workspace, which requires trust."
+      "description": "Gitective runs git in your workspace, which requires trust."
     },
     "virtualWorkspaces": {
       "supported": false,
-      "description": "Whodunit needs a local git repository."
+      "description": "Gitective needs a local git repository."
     }
   },
   "activationEvents": [
@@ -47,184 +47,184 @@
   "contributes": {
     "commands": [
       {
-        "command": "whodunit.toggleInline",
+        "command": "gitective.toggleInline",
         "title": "Toggle Inline Blame",
-        "category": "Whodunit"
+        "category": "Gitective"
       },
       {
-        "command": "whodunit.commitMenu",
+        "command": "gitective.commitMenu",
         "title": "Commit Menu for Current Line",
-        "category": "Whodunit"
+        "category": "Gitective"
       },
       {
-        "command": "whodunit.inspectCommit",
+        "command": "gitective.inspectCommit",
         "title": "Inspect Commit",
-        "category": "Whodunit"
+        "category": "Gitective"
       },
       {
-        "command": "whodunit.compareWithPrevious",
+        "command": "gitective.compareWithPrevious",
         "title": "Changes with Previous Revision",
-        "category": "Whodunit"
+        "category": "Gitective"
       },
       {
-        "command": "whodunit.compareWithWorking",
+        "command": "gitective.compareWithWorking",
         "title": "Changes with Working Tree",
-        "category": "Whodunit"
+        "category": "Gitective"
       },
       {
-        "command": "whodunit.openAtRevision",
+        "command": "gitective.openAtRevision",
         "title": "Open File at Revision",
-        "category": "Whodunit"
+        "category": "Gitective"
       },
       {
-        "command": "whodunit.fileHistory",
+        "command": "gitective.fileHistory",
         "title": "File History",
-        "category": "Whodunit"
+        "category": "Gitective"
       },
       {
-        "command": "whodunit.lineHistory",
+        "command": "gitective.lineHistory",
         "title": "Line History",
-        "category": "Whodunit"
+        "category": "Gitective"
       },
       {
-        "command": "whodunit.searchCommits",
+        "command": "gitective.searchCommits",
         "title": "Search Commits",
-        "category": "Whodunit"
+        "category": "Gitective"
       },
       {
-        "command": "whodunit.openOnRemote",
+        "command": "gitective.openOnRemote",
         "title": "Open Commit on Remote",
-        "category": "Whodunit"
+        "category": "Gitective"
       },
       {
-        "command": "whodunit.copyRemoteLink",
+        "command": "gitective.copyRemoteLink",
         "title": "Copy Commit Link",
-        "category": "Whodunit"
+        "category": "Gitective"
       },
       {
-        "command": "whodunit.copySha",
+        "command": "gitective.copySha",
         "title": "Copy Commit SHA",
-        "category": "Whodunit"
+        "category": "Gitective"
       },
       {
-        "command": "whodunit.copyMessage",
+        "command": "gitective.copyMessage",
         "title": "Copy Commit Message",
-        "category": "Whodunit"
+        "category": "Gitective"
       },
       {
-        "command": "whodunit.olderRevision",
+        "command": "gitective.olderRevision",
         "title": "Older Revision",
-        "category": "Whodunit",
+        "category": "Gitective",
         "icon": "$(arrow-left)"
       },
       {
-        "command": "whodunit.newerRevision",
+        "command": "gitective.newerRevision",
         "title": "Newer Revision",
-        "category": "Whodunit",
+        "category": "Gitective",
         "icon": "$(arrow-right)"
       },
       {
-        "command": "whodunit.openChangeInCommit",
+        "command": "gitective.openChangeInCommit",
         "title": "Open Change in Commit",
-        "category": "Whodunit"
+        "category": "Gitective"
       }
     ],
     "menus": {
       "editor/title": [
         {
-          "command": "whodunit.olderRevision",
-          "when": "resourceScheme == whodunit",
+          "command": "gitective.olderRevision",
+          "when": "resourceScheme == gitective",
           "group": "navigation@1"
         },
         {
-          "command": "whodunit.newerRevision",
-          "when": "resourceScheme == whodunit",
+          "command": "gitective.newerRevision",
+          "when": "resourceScheme == gitective",
           "group": "navigation@2"
         }
       ],
       "commandPalette": [
         {
-          "command": "whodunit.olderRevision",
-          "when": "resourceScheme == whodunit"
+          "command": "gitective.olderRevision",
+          "when": "resourceScheme == gitective"
         },
         {
-          "command": "whodunit.newerRevision",
-          "when": "resourceScheme == whodunit"
+          "command": "gitective.newerRevision",
+          "when": "resourceScheme == gitective"
         },
         {
-          "command": "whodunit.openChangeInCommit",
+          "command": "gitective.openChangeInCommit",
           "when": "false"
         },
         {
-          "command": "whodunit.commitMenu",
+          "command": "gitective.commitMenu",
           "when": "editorIsOpen"
         },
         {
-          "command": "whodunit.inspectCommit",
+          "command": "gitective.inspectCommit",
           "when": "editorIsOpen"
         },
         {
-          "command": "whodunit.compareWithPrevious",
+          "command": "gitective.compareWithPrevious",
           "when": "editorIsOpen"
         },
         {
-          "command": "whodunit.compareWithWorking",
+          "command": "gitective.compareWithWorking",
           "when": "editorIsOpen"
         },
         {
-          "command": "whodunit.openAtRevision",
+          "command": "gitective.openAtRevision",
           "when": "editorIsOpen"
         },
         {
-          "command": "whodunit.fileHistory",
+          "command": "gitective.fileHistory",
           "when": "editorIsOpen"
         },
         {
-          "command": "whodunit.lineHistory",
+          "command": "gitective.lineHistory",
           "when": "editorIsOpen"
         },
         {
-          "command": "whodunit.openOnRemote",
+          "command": "gitective.openOnRemote",
           "when": "editorIsOpen"
         },
         {
-          "command": "whodunit.copyRemoteLink",
+          "command": "gitective.copyRemoteLink",
           "when": "editorIsOpen"
         },
         {
-          "command": "whodunit.copySha",
+          "command": "gitective.copySha",
           "when": "editorIsOpen"
         },
         {
-          "command": "whodunit.copyMessage",
+          "command": "gitective.copyMessage",
           "when": "editorIsOpen"
         }
       ]
     },
     "configuration": {
-      "title": "Whodunit",
+      "title": "Gitective",
       "properties": {
-        "whodunit.inline.enabled": {
+        "gitective.inline.enabled": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Show blame for the current line at the end of the line. Replaces VS Code's built-in `git.blame.editorDecoration.enabled`; Whodunit offers once to turn the built-in one off."
+          "markdownDescription": "Show blame for the current line at the end of the line. Replaces VS Code's built-in `git.blame.editorDecoration.enabled`; Gitective offers once to turn the built-in one off."
         },
-        "whodunit.inline.format": {
+        "gitective.inline.format": {
           "type": "string",
           "default": "${author}, ${ago} • ${message}",
           "markdownDescription": "Inline blame template. Tokens: `${author}`, `${authorEmail}`, `${ago}`, `${agoOrDate}`, `${date}`, `${message}`, `${sha}`."
         },
-        "whodunit.inline.ageTint": {
+        "gitective.inline.ageTint": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Tint the inline annotation by commit age (five buckets: under a day, a week, a month, a year, older). Colors: `whodunit.inlineBlame.age1` … `age5`."
+          "markdownDescription": "Tint the inline annotation by commit age (five buckets: under a day, a week, a month, a year, older). Colors: `gitective.inlineBlame.age1` … `age5`."
         },
-        "whodunit.hover.enabled": {
+        "gitective.hover.enabled": {
           "type": "boolean",
           "default": true,
           "markdownDescription": "Show the blame hover card (author, message, stat, actions). Richer than the built-in `git.blame` hover."
         },
-        "whodunit.hover.trigger": {
+        "gitective.hover.trigger": {
           "type": "string",
           "enum": [
             "annotation",
@@ -233,27 +233,27 @@
           "default": "annotation",
           "markdownDescription": "`annotation`: show the card only when hovering the inline blame on the current line (falls back to the whole current line while inline blame is off). `line`: hover any line, anywhere."
         },
-        "whodunit.hover.avatars": {
+        "gitective.hover.avatars": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Show author avatars in the hover card: GitHub (via the repo's `origin`, reusing an existing VS Code GitHub session, never prompting) then Gravatar, cached locally for a week; the last cached avatar is shown offline, initials when nothing is cached. Turn off to keep Whodunit fully local."
+          "markdownDescription": "Show author avatars in the hover card: GitHub (via the repo's `origin`, reusing an existing VS Code GitHub session, never prompting) then Gravatar, cached locally for a week; the last cached avatar is shown offline, initials when nothing is cached. Turn off to keep Gitective fully local."
         },
-        "whodunit.hover.showChanges": {
+        "gitective.hover.showChanges": {
           "type": "boolean",
           "default": true,
           "description": "Show the blamed line's own diff line (just that line, not the hunk) above the Changes footer in the hover card."
         },
-        "whodunit.statusBar.enabled": {
+        "gitective.statusBar.enabled": {
           "type": "boolean",
           "default": true,
           "markdownDescription": "Show blame for the current line in the status bar (click opens the commit menu). Replaces VS Code's built-in `git.blame.statusBarItem.enabled`."
         },
-        "whodunit.statusBar.format": {
+        "gitective.statusBar.format": {
           "type": "string",
           "default": "$(git-commit) ${author}, ${ago}",
           "markdownDescription": "Status bar blame template. Tokens: `${author}`, `${authorEmail}`, `${ago}`, `${agoOrDate}`, `${date}`, `${message}`, `${sha}`. Codicons like `$(git-commit)` are allowed here."
         },
-        "whodunit.dateFormat": {
+        "gitective.dateFormat": {
           "type": "string",
           "enum": [
             "short",
@@ -264,18 +264,18 @@
           "default": "medium",
           "markdownDescription": "Absolute date style used by `${date}`, `${agoOrDate}`, and the hover card."
         },
-        "whodunit.message.maxLength": {
+        "gitective.message.maxLength": {
           "type": "number",
           "default": 60,
           "minimum": 4,
           "description": "Truncate commit messages to this many characters in inline blame and the status bar."
         },
-        "whodunit.blame.ignoreWhitespace": {
+        "gitective.blame.ignoreWhitespace": {
           "type": "boolean",
           "default": false,
           "description": "Ignore whitespace-only changes when blaming (git blame -w), so reformatting commits do not claim lines."
         },
-        "whodunit.blame.ignoreRevsFile": {
+        "gitective.blame.ignoreRevsFile": {
           "type": "boolean",
           "default": true,
           "markdownDescription": "Honor a `.git-blame-ignore-revs` file at the repository root (git blame --ignore-revs-file)."
@@ -284,7 +284,7 @@
     },
     "colors": [
       {
-        "id": "whodunit.inlineBlame.foreground",
+        "id": "gitective.inlineBlame.foreground",
         "description": "Color of the inline blame annotation.",
         "defaults": {
           "dark": "#7d8590aa",
@@ -294,7 +294,7 @@
         }
       },
       {
-        "id": "whodunit.inlineBlame.age1",
+        "id": "gitective.inlineBlame.age1",
         "description": "Inline blame color for commits under a day (age tint).",
         "defaults": {
           "dark": "#ffb454",
@@ -304,7 +304,7 @@
         }
       },
       {
-        "id": "whodunit.inlineBlame.age2",
+        "id": "gitective.inlineBlame.age2",
         "description": "Inline blame color for commits under a week (age tint).",
         "defaults": {
           "dark": "#d9a65c",
@@ -314,7 +314,7 @@
         }
       },
       {
-        "id": "whodunit.inlineBlame.age3",
+        "id": "gitective.inlineBlame.age3",
         "description": "Inline blame color for commits under a month (age tint).",
         "defaults": {
           "dark": "#a58e63",
@@ -324,7 +324,7 @@
         }
       },
       {
-        "id": "whodunit.inlineBlame.age4",
+        "id": "gitective.inlineBlame.age4",
         "description": "Inline blame color for commits under a year (age tint).",
         "defaults": {
           "dark": "#8b8b8b",
@@ -334,7 +334,7 @@
         }
       },
       {
-        "id": "whodunit.inlineBlame.age5",
+        "id": "gitective.inlineBlame.age5",
         "description": "Inline blame color for commits older (age tint).",
         "defaults": {
           "dark": "#666a70",
@@ -346,30 +346,30 @@
     ],
     "keybindings": [
       {
-        "command": "whodunit.commitMenu",
+        "command": "gitective.commitMenu",
         "key": "alt+shift+b",
         "when": "editorTextFocus"
       },
       {
-        "command": "whodunit.lineHistory",
+        "command": "gitective.lineHistory",
         "key": "alt+shift+h",
         "when": "editorTextFocus"
       },
       {
-        "command": "whodunit.olderRevision",
+        "command": "gitective.olderRevision",
         "key": "alt+shift+,",
-        "when": "resourceScheme == whodunit"
+        "when": "resourceScheme == gitective"
       },
       {
-        "command": "whodunit.newerRevision",
+        "command": "gitective.newerRevision",
         "key": "alt+shift+.",
-        "when": "resourceScheme == whodunit"
+        "when": "resourceScheme == gitective"
       }
     ],
     "walkthroughs": [
       {
-        "id": "whodunit.gettingStarted",
-        "title": "Get started with Whodunit",
+        "id": "gitective.gettingStarted",
+        "title": "Get started with Gitective",
         "description": "Blame that stays out of your way: three things to try.",
         "steps": [
           {
@@ -383,7 +383,7 @@
           {
             "id": "menu",
             "title": "Open the commit menu",
-            "description": "Press ``alt+shift+b`` (or click the status bar blame) for everything about the commit: changes, files, remote link, copy, safe git actions.\n[Open the commit menu](command:whodunit.commitMenu)",
+            "description": "Press ``alt+shift+b`` (or click the status bar blame) for everything about the commit: changes, files, remote link, copy, safe git actions.\n[Open the commit menu](command:gitective.commitMenu)",
             "media": {
               "markdown": "media/walkthrough/menu.md"
             }
@@ -391,7 +391,7 @@
           {
             "id": "history",
             "title": "Walk history",
-            "description": "From any diff, use ← → in the title (``alt+shift+,`` / ``alt+shift+.``) to step through revisions, or ``alt+shift+h`` for the history of one line.\n[Line history](command:whodunit.lineHistory)",
+            "description": "From any diff, use ← → in the title (``alt+shift+,`` / ``alt+shift+.``) to step through revisions, or ``alt+shift+h`` for the history of one line.\n[Line history](command:gitective.lineHistory)",
             "media": {
               "markdown": "media/walkthrough/history.md"
             }

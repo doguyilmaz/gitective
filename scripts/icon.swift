@@ -169,7 +169,7 @@ if CommandLine.arguments.contains("--sheet") {
         sheetContext.draw(image, in: CGRect(x: x, y: (height - size) / 2, width: size, height: size))
         x += size + padding
     }
-    let out = URL(fileURLWithPath: CommandLine.arguments.last(where: { $0.hasSuffix(".png") }) ?? "/tmp/whodunit-icon-sheet.png")
+    let out = URL(fileURLWithPath: CommandLine.arguments.last(where: { $0.hasSuffix(".png") }) ?? "/tmp/gitective-icon-sheet.png")
     writePNG(sheetContext.makeImage()!, to: out)
     print("==> wrote \(out.path)")
 }

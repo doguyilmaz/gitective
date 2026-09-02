@@ -73,8 +73,8 @@ export function activate(context: vscode.ExtensionContext): void {
     ),
     ...registerCommands(services),
     vscode.workspace.onDidChangeConfiguration((event) => {
-      if (!event.affectsConfiguration("whodunit")) return;
-      if (event.affectsConfiguration("whodunit.blame")) applyBlameOptions();
+      if (!event.affectsConfiguration("gitective")) return;
+      if (event.affectsConfiguration("gitective.blame")) applyBlameOptions();
       hud.refresh();
     }),
     // document versions restart on reopen, so a stale entry could match again
@@ -92,7 +92,7 @@ async function checkGitAvailable(): Promise<void> {
     await runGit(["--version"], { cwd: "/" });
   } catch (error) {
     log().error(`git unavailable: ${error instanceof Error ? error.message : String(error)}`);
-    void vscode.window.showWarningMessage("Whodunit needs git on your PATH to work.");
+    void vscode.window.showWarningMessage("Gitective needs git on your PATH to work.");
   }
 }
 

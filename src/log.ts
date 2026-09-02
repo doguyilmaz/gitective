@@ -3,7 +3,7 @@ import * as vscode from "vscode";
 let channel: vscode.LogOutputChannel | undefined;
 
 export function log(): vscode.LogOutputChannel {
-  channel ??= vscode.window.createOutputChannel("Whodunit", { log: true });
+  channel ??= vscode.window.createOutputChannel("Gitective", { log: true });
   return channel;
 }
 
@@ -11,7 +11,7 @@ export function log(): vscode.LogOutputChannel {
 export function reportError(context: string, error: unknown): void {
   const detail = error instanceof Error ? error.message : String(error);
   log().error(`${context}: ${detail}`);
-  void vscode.window.showErrorMessage("Whodunit hit an error.", "Open Logs").then((pick) => {
+  void vscode.window.showErrorMessage("Gitective hit an error.", "Open Logs").then((pick) => {
     if (pick) log().show();
   });
 }

@@ -73,7 +73,7 @@ export async function resolveTarget(
 }
 
 function noBlame(): void {
-  void vscode.window.showInformationMessage("Whodunit: no blame for the current line.");
+  void vscode.window.showInformationMessage("Gitective: no blame for the current line.");
 }
 
 function flash(message: string): void {
@@ -84,7 +84,7 @@ export async function copySha(services: Services, arg: unknown): Promise<void> {
   const target = await resolveTarget(services, arg);
   if (!target) return noBlame();
   if (isUncommittedSha(target.sha)) {
-    void vscode.window.showInformationMessage("Whodunit: the line is uncommitted.");
+    void vscode.window.showInformationMessage("Gitective: the line is uncommitted.");
     return;
   }
   await vscode.env.clipboard.writeText(target.sha);
@@ -95,7 +95,7 @@ export async function copyMessage(services: Services, arg: unknown): Promise<voi
   const target = await resolveTarget(services, arg);
   if (!target) return noBlame();
   if (isUncommittedSha(target.sha)) {
-    void vscode.window.showInformationMessage("Whodunit: the line is uncommitted.");
+    void vscode.window.showInformationMessage("Gitective: the line is uncommitted.");
     return;
   }
   const message = await runGit(["show", "-s", "--format=%B", target.sha], {
@@ -115,7 +115,7 @@ export async function compareWithPrevious(services: Services, arg: unknown): Pro
     try {
       head = (await runGit(["rev-parse", "HEAD"], { cwd: repoRoot })).trim();
     } catch {
-      void vscode.window.showInformationMessage("Whodunit: the repository has no commits yet.");
+      void vscode.window.showInformationMessage("Gitective: the repository has no commits yet.");
       return;
     }
     await openWorkingDiff(repoRoot, relPath, head);
@@ -155,7 +155,7 @@ export async function compareWithWorking(services: Services, arg: unknown): Prom
     try {
       sha = (await runGit(["rev-parse", "HEAD"], { cwd: repoRoot })).trim();
     } catch {
-      void vscode.window.showInformationMessage("Whodunit: the repository has no commits yet.");
+      void vscode.window.showInformationMessage("Gitective: the repository has no commits yet.");
       return;
     }
   }
@@ -166,7 +166,7 @@ export async function openAtRevision(services: Services, arg: unknown): Promise<
   const target = await resolveTarget(services, arg);
   if (!target) return noBlame();
   if (isUncommittedSha(target.sha)) {
-    void vscode.window.showInformationMessage("Whodunit: the line is uncommitted.");
+    void vscode.window.showInformationMessage("Gitective: the line is uncommitted.");
     return;
   }
   const uri = toRevUri({ repoRoot: target.repoRoot, sha: target.sha, relPath: target.relPath });

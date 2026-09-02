@@ -10,13 +10,13 @@ async function linkFor(
 ): Promise<{ url: string; host: string } | undefined> {
   const target = await resolveTarget(services, arg);
   if (!target || isUncommittedSha(target.sha)) {
-    void vscode.window.showInformationMessage("Whodunit: no commit for the current line.");
+    void vscode.window.showInformationMessage("Gitective: no commit for the current line.");
     return undefined;
   }
   const remote = await services.remotes.remoteFor(target.repoRoot);
   if (!remote) {
     void vscode.window.showInformationMessage(
-      "Whodunit: origin is not a GitHub, GitLab or Bitbucket remote.",
+      "Gitective: origin is not a GitHub, GitLab or Bitbucket remote.",
     );
     return undefined;
   }

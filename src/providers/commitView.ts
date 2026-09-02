@@ -5,7 +5,7 @@ import { isValidSha, shortSha } from "../core/sanitize";
 import { runGit } from "../git/run";
 import { log } from "../log";
 
-export const COMMIT_SCHEME = "whodunit-commit";
+export const COMMIT_SCHEME = "gitective-commit";
 
 const FORMAT = "commit %H%nparent %P%nAuthor  %an <%ae>%nDate    %ad%n%n%w(0,4,4)%B";
 
@@ -48,7 +48,7 @@ export class CommitContentProvider implements vscode.TextDocumentContentProvider
       );
     } catch (error) {
       log().error(`commit view: ${error instanceof Error ? error.message : String(error)}`);
-      throw new Error(`Whodunit could not load commit ${shortSha(ref.sha)}.`);
+      throw new Error(`Gitective could not load commit ${shortSha(ref.sha)}.`);
     }
   }
 }
@@ -61,7 +61,7 @@ export class CommitCodeLensProvider implements vscode.CodeLensProvider {
       (file) =>
         new vscode.CodeLens(new vscode.Range(file.line, 0, file.line, 0), {
           title: "Open side-by-side",
-          command: "whodunit.openChangeInCommit",
+          command: "gitective.openChangeInCommit",
           arguments: [
             { ...ref, change: { status: file.status, path: file.path, oldPath: file.oldPath } },
           ],

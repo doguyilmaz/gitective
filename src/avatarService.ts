@@ -21,7 +21,7 @@ async function fetchImageAsDataUri(url: string, token?: string): Promise<string 
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     redirect: "follow",
     headers: {
-      "User-Agent": "whodunit-vscode",
+      "User-Agent": "gitective-vscode",
       ...(token && { Authorization: `Bearer ${token}` }),
     },
   });
@@ -141,7 +141,7 @@ export class AvatarService {
       {
         signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
         headers: {
-          "User-Agent": "whodunit-vscode",
+          "User-Agent": "gitective-vscode",
           Accept: "application/vnd.github+json",
           ...(session && { Authorization: `Bearer ${session.accessToken}` }),
         },

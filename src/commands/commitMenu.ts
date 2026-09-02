@@ -86,7 +86,7 @@ async function askRefName(prompt: string, repoRoot: string): Promise<string | un
   });
   if (!name) return undefined;
   if (!(await validRefName(repoRoot, name.trim()))) {
-    void vscode.window.showErrorMessage(`Whodunit: "${name}" is not a valid git ref name.`);
+    void vscode.window.showErrorMessage(`Gitective: "${name}" is not a valid git ref name.`);
     return undefined;
   }
   return name.trim();
@@ -106,11 +106,11 @@ async function runGitAction(
   try {
     await work();
     services.blame.invalidateRepo(repoRoot);
-    void vscode.window.showInformationMessage(`Whodunit: ${done}`);
+    void vscode.window.showInformationMessage(`Gitective: ${done}`);
   } catch (error) {
     if (error instanceof GitError) {
       void vscode.window.showErrorMessage(
-        `Whodunit: git said: ${error.stderr.trim() || error.message}`,
+        `Gitective: git said: ${error.stderr.trim() || error.message}`,
       );
       return;
     }
@@ -121,7 +121,7 @@ async function runGitAction(
 export async function commitMenu(services: Services, arg: unknown): Promise<void> {
   const ctx = await resolveContext(services, arg);
   if (!ctx) {
-    void vscode.window.showInformationMessage("Whodunit: no commit for the current line.");
+    void vscode.window.showInformationMessage("Gitective: no commit for the current line.");
     return;
   }
   const { repoRoot, sha, relPath, target } = ctx;
@@ -145,7 +145,7 @@ export async function commitMenu(services: Services, arg: unknown): Promise<void
     services.remotes.remoteFor(repoRoot),
   ]);
   if (!details) {
-    void vscode.window.showInformationMessage(`Whodunit: commit ${shortSha(sha)} not found.`);
+    void vscode.window.showInformationMessage(`Gitective: commit ${shortSha(sha)} not found.`);
     return;
   }
   const { entry, stat } = details;
@@ -334,7 +334,7 @@ async function openInspect(repoRoot: string, sha: string): Promise<void> {
 export function inspectCommit(services: Services, arg: unknown): Promise<void> {
   return resolveContext(services, arg).then((ctx) => {
     if (!ctx || isUncommittedSha(ctx.sha)) {
-      void vscode.window.showInformationMessage("Whodunit: no commit for the current line.");
+      void vscode.window.showInformationMessage("Gitective: no commit for the current line.");
       return;
     }
     return openInspect(ctx.repoRoot, ctx.sha);
