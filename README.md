@@ -9,9 +9,7 @@ Who touched this line, why, and what else changed with it. Nothing more.</p>
 
 <p align="center">
   <a href="https://marketplace.visualstudio.com/items?itemName=doguyilmaz.gitective"><img alt="VS Code Marketplace" src="https://badgen.net/vs-marketplace/v/doguyilmaz.gitective?label=Marketplace&color=1a1626"></a>
-  <a href="https://marketplace.visualstudio.com/items?itemName=doguyilmaz.gitective"><img alt="Installs" src="https://badgen.net/vs-marketplace/i/doguyilmaz.gitective?color=1a1626"></a>
   <a href="https://open-vsx.org/extension/doguyilmaz/gitective"><img alt="Open VSX" src="https://img.shields.io/open-vsx/v/doguyilmaz/gitective?label=Open%20VSX&color=1a1626"></a>
-  <a href="https://github.com/doguyilmaz/gitective/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/doguyilmaz/gitective/ci.yml?label=CI"></a>
   <a href="LICENSE"><img alt="MIT" src="https://img.shields.io/badge/license-MIT-f6c177"></a>
 </p>
 
