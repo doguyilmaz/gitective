@@ -82,9 +82,13 @@ function attr(text: string): string {
   return text.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 }
 
+// only a plain github profile url may become a link; anything else stays text
+const PROFILE_URL_RE = /^https:\/\/github\.com\/[A-Za-z0-9-]+$/;
+
 function authorLine(model: HoverModel): string {
   const name = safeText(model.author);
-  const linked = model.authorUrl ? `[${name}](${model.authorUrl} "Open profile")` : name;
+  const url = model.authorUrl && PROFILE_URL_RE.test(model.authorUrl) ? model.authorUrl : undefined;
+  const linked = url ? `[${name}](${url} "Open profile")` : name;
   const badge = model.signature
     ? ` <img src="${model.signature.badgeSrc}" width="14" height="14" title="${attr(model.signature.label)}">`
     : "";

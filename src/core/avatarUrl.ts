@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-const NOREPLY_ID_RE = /^(\d+)\+[^@]+@users\.noreply\.github\.com$/;
+const NOREPLY_ID_RE = /^(\d+)\+([a-z0-9-]+)@users\.noreply\.github\.com$/;
 const NOREPLY_USER_RE = /^([a-z0-9-]+)@users\.noreply\.github\.com$/;
 
 export function githubLoginFromEmail(email: string): string | undefined {

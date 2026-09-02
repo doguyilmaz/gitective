@@ -30,5 +30,6 @@ describe("avatarUrlCandidates", () => {
     expect(githubLoginFromEmail("52458408+doguyilmaz@users.noreply.github.com")).toBe("doguyilmaz");
     expect(githubLoginFromEmail("doguyilmaz@users.noreply.github.com")).toBe("doguyilmaz");
     expect(githubLoginFromEmail("dogu@togg.com.tr")).toBeUndefined();
+    expect(githubLoginFromEmail("1+a)b[c](d@users.noreply.github.com")).toBeUndefined();
   });
 });

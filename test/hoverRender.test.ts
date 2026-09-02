@@ -67,6 +67,19 @@ describe("renderDetails", () => {
     );
   });
 
+  test("a hostile author url is never linked", () => {
+    for (const authorUrl of [
+      "https://github.com/x)[evil](https://evil.example",
+      'https://github.com/x" onclick="1',
+      "https://evil.example/doguyilmaz",
+      "javascript:alert(1)",
+    ]) {
+      const out = renderDetails({ ...model, authorUrl });
+      expect(out).toContain("<strong>Umut Topalak</strong>");
+      expect(out).not.toContain(authorUrl);
+    }
+  });
+
   test("avatar block floats the image when present", () => {
     const out = renderDetails({ ...model, avatarSrc: "data:image/png;base64,AAAA" });
     expect(out).toContain(
