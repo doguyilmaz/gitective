@@ -63,7 +63,7 @@ export class BlameHud implements vscode.Disposable {
 
   constructor(private readonly services: Services) {
     this.avatars = new AvatarService(services.remotes, services.avatarCache);
-    this.statusItem.name = "Whodunit Blame";
+    this.statusItem.name = "Whodunit";
     this.statusItem.command = "whodunit.commitMenu";
     this.disposables.push(
       this.plain,
