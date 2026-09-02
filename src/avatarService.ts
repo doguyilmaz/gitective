@@ -1,10 +1,8 @@
 import * as vscode from "vscode";
 import { avatarDataUri } from "./core/avatar";
 import { avatarUrlCandidates } from "./core/avatarUrl";
-import type { GitHubRepo } from "./core/gitRemote";
-import { parseGitHubRemote } from "./core/gitRemote";
 import { isValidSha } from "./core/sanitize";
-import { GitError, runGit } from "./git/run";
+import type { RemoteResolver } from "./git/remotes";
 
 const FETCH_TIMEOUT_MS = 2500;
 const MAX_AVATAR_BYTES = 200 * 1024;
@@ -35,7 +33,7 @@ async function fetchImageAsDataUri(url: string, token?: string): Promise<string 
 
 export class AvatarService {
   private readonly cache = new Map<string, Promise<string>>();
-  private readonly remotes = new Map<string, Promise<GitHubRepo | undefined>>();
+  constructor(private readonly remotes: RemoteResolver) {}
 
   avatarFor(name: string, email: string, commit?: CommitRef): Promise<string> {
     const key = `${name}\n${email}`;
@@ -70,8 +68,8 @@ export class AvatarService {
   // link private commit emails to real accounts; silent session only, no prompt
   private async fromGitHubApi(commit: CommitRef): Promise<string | undefined> {
     if (!isValidSha(commit.sha)) return undefined;
-    const remote = await this.remoteFor(commit.repoRoot);
-    if (!remote) return undefined;
+    const remote = await this.remotes.remoteFor(commit.repoRoot);
+    if (remote?.host !== "github") return undefined;
 
     const session = await vscode.authentication
       .getSession("github", ["repo"], { silent: true })
@@ -100,18 +98,4 @@ export class AvatarService {
     return fetchImageAsDataUri(sized);
   }
 
-  private remoteFor(repoRoot: string): Promise<GitHubRepo | undefined> {
-    let cached = this.remotes.get(repoRoot);
-    if (!cached) {
-      cached = runGit(["remote", "get-url", "origin"], { cwd: repoRoot }).then(
-        (url) => parseGitHubRemote(url),
-        (error) => {
-          if (error instanceof GitError) return undefined;
-          throw error;
-        },
-      );
-      this.remotes.set(repoRoot, cached);
-    }
-    return cached;
-  }
 }

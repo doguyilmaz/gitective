@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { registerCommands } from "./commands";
 import { BlameService } from "./git/blameService";
+import { RemoteResolver } from "./git/remotes";
 import { RepoResolver } from "./git/repository";
 import { runGit } from "./git/run";
 import { GitWatcher } from "./gitWatcher";
@@ -21,6 +22,7 @@ export function activate(context: vscode.ExtensionContext): void {
   const services: Services = {
     resolver: new RepoResolver((info) => watcher.watch(info.root)),
     blame,
+    remotes: new RemoteResolver(),
   };
   const hud = new BlameHud(services);
   hudRef.current = hud;

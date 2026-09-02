@@ -118,9 +118,11 @@ function overAnnotation(
 
 export class BlameHoverProvider implements vscode.HoverProvider {
   private readonly messageCache = new Map<string, Promise<string | undefined>>();
-  private readonly avatars = new AvatarService();
+  private readonly avatars: AvatarService;
 
-  constructor(private readonly services: Services) {}
+  constructor(private readonly services: Services) {
+    this.avatars = new AvatarService(services.remotes);
+  }
 
   async provideHover(
     doc: vscode.TextDocument,
