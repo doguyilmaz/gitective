@@ -14,6 +14,10 @@
   },
   "homepage": "https://github.com/doguyilmaz/gitective#readme",
   "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#1a1626",
+    "theme": "dark"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },

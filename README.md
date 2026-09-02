@@ -1,45 +1,82 @@
-# Gitective
+<p align="center">
+  <img src="media/icon.png" width="112" alt="Gitective">
+</p>
 
-Git blame that stays out of your way.
+<h1 align="center">Gitective</h1>
 
-Gitective shows who last touched the line you're on and lets you act on it, without sidebars,
-graphs, accounts, or telemetry. Inline blame on the current line, a calm hover card, one grouped
-commit menu, real VS Code diffs you can walk through revision by revision, and line history.
-That's the whole extension: under 100 KB, zero runtime dependencies.
+<p align="center"><strong>Git blame, investigated.</strong><br>
+Who touched this line, why, and what else changed with it. Nothing more.</p>
+
+<p align="center">
+  <a href="https://marketplace.visualstudio.com/items?itemName=doguyilmaz.gitective"><img alt="VS Code Marketplace" src="https://img.shields.io/visual-studio-marketplace/v/doguyilmaz.gitective?label=Marketplace&color=1a1626"></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=doguyilmaz.gitective"><img alt="Installs" src="https://img.shields.io/visual-studio-marketplace/i/doguyilmaz.gitective?color=1a1626"></a>
+  <a href="https://open-vsx.org/extension/doguyilmaz/gitective"><img alt="Open VSX" src="https://img.shields.io/open-vsx/v/doguyilmaz/gitective?label=Open%20VSX&color=1a1626"></a>
+  <a href="https://github.com/doguyilmaz/gitective/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/doguyilmaz/gitective/ci.yml?label=CI"></a>
+  <a href="LICENSE"><img alt="MIT" src="https://img.shields.io/badge/license-MIT-f6c177"></a>
+</p>
+
+---
+
+Most blame tooling comes bundled with sidebars, graphs, accounts, and upsells. Gitective is the
+blame part only, done carefully: the current line's author at the end of the line, a hover card that
+answers the next three questions, and a real VS Code diff one click away. Under 100 KB, zero
+runtime dependencies, no telemetry.
+
+<!--
+  Screenshots: drop two captures into media/ and uncomment.
+  1. media/hover.png  — the hover card (hover the inline annotation on any line)
+  2. media/menu.png   — the commit menu (alt+shift+b)
+
+<p align="center"><img src="media/hover.png" width="720" alt="Hover card"></p>
+<p align="center"><img src="media/menu.png" width="560" alt="Commit menu"></p>
+-->
+
+## Thirty seconds
+
+1. Open any file in a git repository. The gray text after the current line is the blame.
+2. Hover it: author, dates, full message, the exact line change, and actions.
+3. Press <kbd>alt</kbd>+<kbd>shift</kbd>+<kbd>b</kbd> for the commit menu; click **Changes** for a real diff.
+4. Inside the diff, use the ← → buttons in the title to walk the file's history, one revision at a time.
 
 ## What you get
 
-- **Inline blame** at the end of the current line, tinted by commit age. Unsaved edits show as
-  uncommitted immediately, never as a stale commit.
-- **Hover card** on the annotation: avatar, author (linked to their GitHub profile when known), a
-  shield when the commit is signed (green when verified, muted if the key is unavailable, red if
-  bad), dates, the full commit message, then one compact row: sha (inspect), copy, changes, file history, line history, `Open on
-  GitHub`, more (commit menu), settings. A second section shows the blamed line's own diff line
-  (copyable on its own) and a `Changes a ↔ b` footer. "You" means the commit email equals this repo's
-  `user.email`; names are never matched.
-- **Status bar**: `You, 1 month ago` at the left edge of the right-hand items; hover for the same
-  card plus a colored `51 files changed, 5675 insertions(+), 401 deletions(-)` line, click for the
-  commit menu. VS Code's own built-in blame item shows up next
-  to it since 1.98; Gitective offers once to turn the built-in one off.
-- **Commit menu** (`alt+shift+b`, status bar click, or `Commit ⋯`): open changes in this file, vs the
-  working tree, all changed files, inspect commit; open or copy the commit link on GitHub, GitLab or
-  Bitbucket; file and line history; copy SHA or message; and four safe git actions: create branch,
-  create tag, revert, checkout detached. Nothing rewrites history.
-- **Real diffs**: parent ↔ commit in a normal VS Code diff editor. Both panes blame themselves, so
-  hover inside and keep going back. `←` `→` in the title (`alt+shift+,` / `alt+shift+.`) step through
-  the file's revisions. Snapshot tabs are named `file @ sha` and keep syntax highlighting.
-- **Inspect commit**: a read-only text document with header, message, stat and patch, with
-  `Open side-by-side` lenses on every file. Searchable and copyable; no webview.
-- **Search and history**: commit search as you type (message, `@author`, SHA), file history, and
-  line history (`alt+shift+h`), each a click from the commit menu.
-- Works in VS Code's own Git diffs too (Source Control view documents).
+**Inline blame** on the current line, tinted by age (today is amber, last year is gray). Edits you
+haven't saved yet show as uncommitted immediately, never as someone else's commit.
 
-## Privacy
+**Hover card**: avatar, author linked to their GitHub profile, a shield when the commit is signed
+(green if verified), relative and absolute dates, the full commit message, then one compact row of
+actions. A second section shows the blamed line's own diff line, copyable on its own, and a
+`Changes a ↔ b` link to the diff. "You" means the commit email matches this repo's `user.email`.
 
-No telemetry. Git runs locally. The only network use is author avatars: GitHub (via the repo's
-`origin`, reusing an existing VS Code GitHub session, never prompting) then Gravatar. Avatars are
-cached locally for a week, the last cached one is shown offline, and initials are drawn when nothing
-is cached. Set `gitective.hover.avatars` to `false` and Gitective never touches the network.
+**Commit menu**, one grouped menu per commit: changes in this file, changes vs the working tree, all
+changed files, inspect commit; open or copy the commit link on GitHub, GitLab or Bitbucket; file and
+line history; copy SHA or message; and four git actions that never rewrite history: create branch,
+create tag, revert, checkout detached.
+
+**Real diffs**, parent ↔ commit, in the normal VS Code diff editor. Both panes blame themselves, so
+you can hover inside an old revision and keep going back. Snapshot tabs are named `file @ sha` and
+keep syntax highlighting.
+
+**Inspect commit**: a read-only text document with header, message, stat and patch, plus
+"Open side-by-side" lenses on every file. Searchable, copyable, no webview.
+
+**Search and history**: commit search as you type (message, `@author`, SHA), file history, and line
+history: every commit that touched the line under the cursor.
+
+**Status bar**: `You, 1 month ago` at the left edge of the right-hand items. Hover for the full card
+with a colored files/insertions/deletions line; click for the commit menu.
+
+Also: blame works inside VS Code's own Git diffs, `git blame -w` and `.git-blame-ignore-revs` are
+one setting each, and Gitective offers once to switch off VS Code's built-in blame item so you don't
+see two.
+
+## Keys
+
+| Key | Does | When |
+| --- | --- | --- |
+| <kbd>alt</kbd>+<kbd>shift</kbd>+<kbd>b</kbd> | Commit menu for the current line | editor focused |
+| <kbd>alt</kbd>+<kbd>shift</kbd>+<kbd>h</kbd> | Line history | editor focused |
+| <kbd>alt</kbd>+<kbd>shift</kbd>+<kbd>,</kbd> / <kbd>.</kbd> | Older / newer revision | a Gitective revision or diff tab is active |
 
 ## Settings
 
@@ -47,7 +84,7 @@ is cached. Set `gitective.hover.avatars` to `false` and Gitective never touches 
 | --- | --- | --- |
 | `gitective.inline.enabled` | `true` | Inline blame for the current line |
 | `gitective.inline.format` | `${author}, ${ago} • ${message}` | Inline template |
-| `gitective.inline.ageTint` | `true` | Tint the annotation by commit age (`gitective.inlineBlame.age1…age5`) |
+| `gitective.inline.ageTint` | `true` | Tint the annotation by commit age (`gitective.inlineBlame.age1…age5` colors) |
 | `gitective.hover.enabled` | `true` | Blame hover card |
 | `gitective.hover.trigger` | `annotation` | Card over the inline annotation only, or `line` for any line |
 | `gitective.hover.avatars` | `true` | Author avatars (GitHub, Gravatar; cached; initials offline) |
@@ -55,60 +92,51 @@ is cached. Set `gitective.hover.avatars` to `false` and Gitective never touches 
 | `gitective.statusBar.enabled` | `true` | Status bar blame (click opens the commit menu) |
 | `gitective.statusBar.format` | `$(git-commit) ${author}, ${ago}` | Status bar template (codicons allowed) |
 | `gitective.dateFormat` | `medium` | Absolute date style for `${date}`, `${agoOrDate}`, hover |
-| `gitective.message.maxLength` | `60` | Message truncation for inline/status bar |
+| `gitective.message.maxLength` | `60` | Message truncation for inline and status bar |
 | `gitective.blame.ignoreWhitespace` | `false` | `git blame -w`: reformatting commits stop claiming lines |
 | `gitective.blame.ignoreRevsFile` | `true` | Honor `.git-blame-ignore-revs` at the repo root |
 
-Template tokens: `${author}` `${authorEmail}` `${ago}` `${agoOrDate}` `${date}` `${message}` `${sha}`
-(`${agoOrDate}` is relative under 30 days, an absolute date after).
-
-## Keys
-
-| Key | Does | When |
-| --- | --- | --- |
-| `alt+shift+b` | Commit menu for the current line | editor focused |
-| `alt+shift+h` | Line history | editor focused |
-| `alt+shift+,` / `alt+shift+.` | Older / newer revision | a Gitective revision or diff tab is active |
+Template tokens: `${author}` `${authorEmail}` `${ago}` `${agoOrDate}` `${date}` `${message}` `${sha}`.
+`${agoOrDate}` is relative under 30 days and an absolute date after.
 
 ## Commands
 
-`Gitective:` Commit Menu for Current Line · Inspect Commit · Changes with Previous Revision ·
-Changes with Working Tree · Open File at Revision · File History · Line History · Search Commits ·
-Open Commit on Remote · Copy Commit Link · Copy Commit SHA · Copy Commit Message · Older / Newer
-Revision · Toggle Inline Blame.
+`Gitective:` Commit Menu for Current Line · Inspect Commit · Changes with Previous Revision · Changes
+with Working Tree · Open File at Revision · File History · Line History · Search Commits · Open Commit
+on Remote · Copy Commit Link · Copy Commit SHA · Copy Commit Message · Older / Newer Revision · Toggle
+Inline Blame.
 
-## Notes
+## Compared with
 
-- Requires `git` on your PATH. Files larger than 5 MB are not blamed.
+| | Gitective | GitLens | VS Code built-in blame |
+| --- | --- | --- | --- |
+| Current-line blame, hover, real diffs | yes | yes | status bar and hover only |
+| Commit menu with safe git actions | yes | yes, plus reset and rebase | no |
+| Line history, file history, search | QuickPicks | sidebar views | no |
+| Sidebars, commit graph, worktrees, AI | no, on purpose | yes | no |
+| Account, telemetry, paid tier | none | yes | none |
+| Size | under 100 KB | tens of MB | built in |
+
+If you want the graph and the views, GitLens is excellent. If you want blame that stays out of the
+way, this is the tool.
+
+## Privacy
+
+No telemetry. Git runs locally. The only network use is author avatars: GitHub via the repo's
+`origin` (reusing an existing VS Code GitHub session, never prompting), then Gravatar, cached locally
+for a week, with initials drawn when nothing is cached. Set `gitective.hover.avatars` to `false` and
+Gitective never touches the network.
+
+## Requirements
+
+- `git` on your PATH. Files larger than 5 MB are not blamed.
 - Untrusted and virtual workspaces are not supported (Gitective runs git in your workspace).
-- Not in scope, on purpose: whole-file gutter blame, sidebar views, commit graph, rebase/reset,
-  PR/issue integrations, AI.
 
-## Development
+## Contributing
 
-```sh
-bun install
-bun run watch     # rebuild on save; F5 launches an Extension Development Host
-bun run test      # unit tests (bun)
-bun run test:vsc  # real VS Code host tests
-bun run check && bun run lint
-bun run package   # build the .vsix
-bun run icon      # regenerate media/icon.png (macOS, Swift toolchain)
-```
-
-See `CONTRIBUTING.md`.
-
-### Releasing
-
-1. Bump `version` in `package.json` and add the `CHANGELOG.md` entry; commit.
-2. `git tag v<version> && git push --tags`.
-3. The `release` workflow packages the vsix, attaches it to a GitHub Release, and publishes to the
-   VS Code Marketplace with the `VSCE_PAT` secret (and to Open VSX when `OVSX_PAT` is set).
-
-One-time setup: create the publisher `doguyilmaz` at marketplace.visualstudio.com/manage, create an
-Azure DevOps personal access token with the **Marketplace → Manage** scope (organization: all
-accessible), and store it as the `VSCE_PAT` repository secret. For a manual publish: `bunx vsce publish`.
+`bun install`, then `F5` for an Extension Development Host. Run `bun run check && bun run lint &&
+bun run test && bun run test:vsc` before a PR. Details in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-MIT
+[MIT](LICENSE)
