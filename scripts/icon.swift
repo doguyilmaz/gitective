@@ -9,8 +9,8 @@ import UniformTypeIdentifiers
 //   swift scripts/icon.swift            # media/icon.png (256 px)
 //   swift scripts/icon.swift --sheet    # also a legibility sheet at 16–256 px
 //
-// The mark: the feature itself. Code lines on a git rail; the current line is
-// lit and carries its amber blame annotation, its commit node filled on the rail.
+// The mark: three commits on a git rail, the lit one carrying its line into a
+// gold commit node with the blame annotation hanging from it as an evidence tag.
 
 func rgb(_ hex: UInt32, _ alpha: CGFloat = 1) -> CGColor {
     CGColor(
@@ -40,38 +40,18 @@ func makeContext(_ size: Int) -> CGContext {
     return context
 }
 
-// The mark is the feature itself: three lines of code on a git rail, the
-// current line lit, with its blame annotation trailing in amber and its commit
-// node filled on the rail. Everything else stays muted so the annotation is
-// the hero at every size.
+// The mark: three commits on a git rail. The lit commit carries its code line,
+// which ends in the gold commit node, and the blame annotation hangs from that
+// node as an evidence tag. Geometry is in 256-unit design space, y-down like the
+// canvas sketch, and flipped once when drawing.
 let railColor = rgb(0x4A4563)
 let dimColor = rgb(0x6B6588)
 let codeColor = rgb(0xECE7F7)
-let annotationColor = rgb(0xF6C177)
+let amber = rgb(0xF6C177)
 
-struct Row {
-    let y: CGFloat          // fraction of the side, y-up
-    let codeEnd: CGFloat    // fraction of the side
-    let lit: Bool
-}
-
-let rows: [Row] = [
-    Row(y: 0.70, codeEnd: 0.71, lit: false),
-    Row(y: 0.50, codeEnd: 0.55, lit: true),
-    Row(y: 0.30, codeEnd: 0.64, lit: false),
-]
-let railX: CGFloat = 0.20
-let codeStart: CGFloat = 0.31
-let annotationStart: CGFloat = 0.615
-let annotationEnd: CGFloat = 0.815
-let barHeight: CGFloat = 0.092
-
-func bar(_ context: CGContext, size: CGFloat, y: CGFloat, from: CGFloat, to: CGFloat, color: CGColor) {
-    let h = size * barHeight
-    let rect = CGRect(x: size * from, y: size * y - h / 2, width: size * (to - from), height: h)
-    context.setFillColor(color)
-    context.addPath(CGPath(roundedRect: rect, cornerWidth: h / 2, cornerHeight: h / 2, transform: nil))
-    context.fillPath()
+struct P {
+    let x: CGFloat
+    let y: CGFloat
 }
 
 func drawIcon(size: CGFloat) -> CGImage {
@@ -96,55 +76,61 @@ func drawIcon(size: CGFloat) -> CGImage {
         options: []
     )
 
-    // a soft amber wash behind the lit row, the way the editor highlights the current line
-    let lit = rows.first { $0.lit }!
-    let washHeight = size * 0.19
-    let wash = CGGradient(
-        colorsSpace: CGColorSpaceCreateDeviceRGB(),
-        colors: [rgb(0xF6C177, 0), rgb(0xF6C177, 0.10), rgb(0xF6C177, 0)] as CFArray,
-        locations: [0, 0.5, 1]
-    )!
-    context.saveGState()
-    context.clip(to: CGRect(x: body.minX, y: size * lit.y - washHeight / 2, width: body.width, height: washHeight))
-    context.drawLinearGradient(
-        wash,
-        start: CGPoint(x: body.minX, y: size * lit.y),
-        end: CGPoint(x: body.maxX, y: size * lit.y),
-        options: []
-    )
-    context.restoreGState()
+    // design space: 256 units, y down
+    let u = size / 256
+    context.translateBy(x: 0, y: size)
+    context.scaleBy(x: u, y: -u)
+    context.setLineCap(.round)
+    context.setLineJoin(.round)
 
-    // the git rail with one node per line
-    let railWidth = size * 0.032
-    context.setFillColor(railColor)
-    context.addPath(CGPath(
-        roundedRect: CGRect(x: size * railX - railWidth / 2, y: size * 0.24, width: railWidth, height: size * 0.52),
-        cornerWidth: railWidth / 2, cornerHeight: railWidth / 2, transform: nil
-    ))
-    context.fillPath()
-
-    let nodeRadius = size * 0.048
-    for row in rows {
-        let centre = CGPoint(x: size * railX, y: size * row.y)
-        // dark ring separates the node from the rail
+    func rounded(_ x: CGFloat, _ y: CGFloat, _ w: CGFloat, _ h: CGFloat, _ color: CGColor) {
+        context.setFillColor(color)
+        context.addPath(CGPath(roundedRect: CGRect(x: x, y: y, width: w, height: h), cornerWidth: h / 2, cornerHeight: h / 2, transform: nil))
+        context.fillPath()
+    }
+    func node(_ x: CGFloat, _ y: CGFloat, _ r: CGFloat, _ color: CGColor) {
         context.setFillColor(bodyBottom)
-        context.fillEllipse(in: CGRect(
-            x: centre.x - nodeRadius - size * 0.018, y: centre.y - nodeRadius - size * 0.018,
-            width: (nodeRadius + size * 0.018) * 2, height: (nodeRadius + size * 0.018) * 2
-        ))
-        context.setFillColor(row.lit ? annotationColor : dimColor)
-        context.fillEllipse(in: CGRect(
-            x: centre.x - nodeRadius, y: centre.y - nodeRadius,
-            width: nodeRadius * 2, height: nodeRadius * 2
-        ))
+        context.fillEllipse(in: CGRect(x: x - r - 5, y: y - r - 5, width: (r + 5) * 2, height: (r + 5) * 2))
+        context.setFillColor(color)
+        context.fillEllipse(in: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2))
     }
 
-    for row in rows {
-        bar(context, size: size, y: row.y, from: codeStart, to: row.codeEnd, color: row.lit ? codeColor : dimColor)
-        if row.lit {
-            bar(context, size: size, y: row.y, from: annotationStart, to: annotationEnd, color: annotationColor)
-        }
-    }
+    // rail and its commits
+    context.setStrokeColor(railColor)
+    context.setLineWidth(10)
+    context.move(to: CGPoint(x: 52, y: 72))
+    context.addLine(to: CGPoint(x: 52, y: 148))
+    context.strokePath()
+
+    rounded(72, 63, 104, 18, codeColor)
+    rounded(72, 101, 56, 12, railColor)
+    node(52, 72, 11, codeColor)
+    node(52, 107, 11, dimColor)
+    node(52, 148, 11, dimColor)
+
+    // string from the gold node down to the tag's hole
+    context.setStrokeColor(dimColor)
+    context.setLineWidth(4)
+    context.move(to: CGPoint(x: 176, y: 72))
+    context.addCurve(to: CGPoint(x: 126, y: 152), control1: CGPoint(x: 214, y: 86), control2: CGPoint(x: 132, y: 124))
+    context.strokePath()
+    node(176, 72, 12, amber)
+
+    // the evidence tag, tilted, hole on its left end
+    let tagCentre = CGPoint(x: 164, y: 172)
+    context.saveGState()
+    context.translateBy(x: tagCentre.x, y: tagCentre.y)
+    context.rotate(by: 12 * .pi / 180)
+    context.translateBy(x: -tagCentre.x, y: -tagCentre.y)
+    let tagRect = CGRect(x: tagCentre.x - 66, y: tagCentre.y - 30, width: 132, height: 60)
+    context.setFillColor(amber)
+    context.addPath(CGPath(roundedRect: tagRect, cornerWidth: 12, cornerHeight: 12, transform: nil))
+    context.fillPath()
+    context.setFillColor(bodyBottom)
+    context.fillEllipse(in: CGRect(x: tagRect.minX + 18 - 7, y: tagCentre.y - 7, width: 14, height: 14))
+    rounded(tagRect.minX + 36, tagRect.minY + 16, 76, 9, rgb(0x120F1F, 0.55))
+    rounded(tagRect.minX + 36, tagRect.minY + 35, 48, 9, rgb(0x120F1F, 0.35))
+    context.restoreGState()
 
     context.restoreGState()
     return context.makeImage()!
