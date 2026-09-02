@@ -122,8 +122,8 @@ export class AvatarService {
     if (this.failures >= FAILURES_BEFORE_TRIP) this.trip("network failures");
   }
 
-  // the GitLens mechanism: the repo's own commits, resolved by the GitHub API,
-  // link private commit emails to real accounts; silent session only, no prompt
+  // the repo's own commits, resolved by the GitHub API, link private commit
+  // emails to real accounts; silent session only, never a sign-in prompt
   private async fromGitHubApi(commit: CommitRef): Promise<AvatarInfo | undefined> {
     if (!isValidSha(commit.sha)) return undefined;
     const remote = await this.remotes.remoteFor(commit.repoRoot);

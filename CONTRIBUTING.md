@@ -27,7 +27,7 @@ each change.
 - Every git invocation passes an argument array and validates shas and paths first.
 - Hover markdown escapes all commit-derived text; command links only use the whitelist.
 - Add a setting only if you can name who turns it off.
-- No telemetry. Network only for avatars, only after consent.
+- No telemetry. Network only for avatars, and `gitective.hover.avatars` turns that off.
 
 ## Checks
 

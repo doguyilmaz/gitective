@@ -19,7 +19,6 @@ interface ResolvedLine {
   found: LineBlame;
 }
 
-// shared by both hover providers: same gating, same cached blame lookup
 async function resolveLine(
   services: Services,
   doc: vscode.TextDocument,

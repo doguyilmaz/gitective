@@ -420,8 +420,7 @@
     "test": "bun test",
     "test:vsc": "bun run build && vscode-test",
     "vscode:prepublish": "bun esbuild.mjs --production",
-    "package": "vsce package",
-    "icon": "swift scripts/icon.swift"
+    "package": "vsce package"
   },
   "devDependencies": {
     "@types/bun": "^1.2.0",

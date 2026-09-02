@@ -14,5 +14,5 @@
     "noEmit": true,
     "types": ["node", "bun"]
   },
-  "include": ["src", "test", "scripts"]
+  "include": ["src", "test"]
 }

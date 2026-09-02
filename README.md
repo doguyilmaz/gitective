@@ -20,15 +20,6 @@ blame part only, done carefully: the current line's author at the end of the lin
 answers the next three questions, and a real VS Code diff one click away. Under 100 KB, zero
 runtime dependencies, no telemetry.
 
-<!--
-  Screenshots: drop two captures into media/ and uncomment.
-  1. media/hover.png  — the hover card (hover the inline annotation on any line)
-  2. media/menu.png   — the commit menu (alt+shift+b)
-
-<p align="center"><img src="media/hover.png" width="720" alt="Hover card"></p>
-<p align="center"><img src="media/menu.png" width="560" alt="Commit menu"></p>
--->
-
 ## Thirty seconds
 
 1. Open any file in a git repository. The gray text after the current line is the blame.

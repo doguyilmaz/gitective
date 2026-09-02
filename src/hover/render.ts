@@ -131,8 +131,7 @@ function plural(count: number, noun: string): string {
   return `${count} ${noun}${count === 1 ? "" : "s"}`;
 }
 
-// the built-in blame's stat line, colors via theme variables (the only css
-// the hover sanitizer lets through)
+// colors via theme variables, the only css the hover sanitizer lets through
 export function statLine(stat: HoverStat): string {
   const parts = [plural(stat.files, "file") + " changed"];
   if (stat.insertions > 0) {

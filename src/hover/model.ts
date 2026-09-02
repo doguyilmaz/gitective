@@ -128,7 +128,10 @@ export function modelFor(
     },
     links: {
       copySha: commandUri("gitective.copySha", target),
-      inspect: commandUri("gitective.inspectCommit", { repoRoot: target.repoRoot, sha: target.sha }),
+      inspect: commandUri("gitective.inspectCommit", {
+        repoRoot: target.repoRoot,
+        sha: target.sha,
+      }),
       settings: commandUri("workbench.action.openSettings", "gitective"),
       changes: commandUri("gitective.compareWithPrevious", target),
       changesWorking: commandUri("gitective.compareWithWorking", target),
