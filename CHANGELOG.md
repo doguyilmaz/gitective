@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1
+
+- Marketplace listing refreshed: new README and keywords. No functional changes.
+
 ## 1.0.0
 
 First release of Gitective: git blame, investigated.
