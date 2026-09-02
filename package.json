@@ -5,6 +5,14 @@
   "version": "0.2.0",
   "publisher": "doguyilmaz",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/doguyilmaz/whodunit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/doguyilmaz/whodunit/issues"
+  },
+  "homepage": "https://github.com/doguyilmaz/whodunit#readme",
   "icon": "media/icon.png",
   "engines": {
     "vscode": "^1.85.0"
@@ -401,7 +409,7 @@
     "test": "bun test",
     "test:vsc": "bun run build && vscode-test",
     "vscode:prepublish": "bun esbuild.mjs --production",
-    "package": "vsce package --allow-missing-repository",
+    "package": "vsce package",
     "icon": "swift scripts/icon.swift"
   },
   "devDependencies": {

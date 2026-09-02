@@ -5,7 +5,7 @@ Git blame that stays out of your way.
 Whodunit shows who last touched the line you're on and lets you act on it, without sidebars,
 graphs, accounts, or telemetry. Inline blame on the current line, a calm hover card, one grouped
 commit menu, real VS Code diffs you can walk through revision by revision, and line history.
-That's the whole extension: 27 KB, zero runtime dependencies.
+That's the whole extension: under 100 KB, zero runtime dependencies.
 
 ## What you get
 
@@ -96,8 +96,18 @@ bun run package   # build the .vsix
 bun run icon      # regenerate media/icon.png (macOS, Swift toolchain)
 ```
 
-See `CONTRIBUTING.md`. Publishing: add `repository` to `package.json`, `bunx vsce login doguyilmaz`,
-push a `v*` tag (the release workflow publishes with `VSCE_PAT`).
+See `CONTRIBUTING.md`.
+
+### Releasing
+
+1. Bump `version` in `package.json` and add the `CHANGELOG.md` entry; commit.
+2. `git tag v<version> && git push --tags`.
+3. The `release` workflow packages the vsix, attaches it to a GitHub Release, and publishes to the
+   VS Code Marketplace with the `VSCE_PAT` secret (and to Open VSX when `OVSX_PAT` is set).
+
+One-time setup: create the publisher `doguyilmaz` at marketplace.visualstudio.com/manage, create an
+Azure DevOps personal access token with the **Marketplace → Manage** scope (organization: all
+accessible), and store it as the `VSCE_PAT` repository secret. For a manual publish: `bunx vsce publish`.
 
 ## License
 
