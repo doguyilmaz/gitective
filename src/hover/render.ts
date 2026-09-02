@@ -25,10 +25,19 @@ export interface HoverRemote {
   icon: "github" | "link-external";
 }
 
+export type HoverSignatureStatus = "verified" | "unverified" | "bad";
+
 export interface HoverSignature {
-  badgeSrc: string;
+  status: HoverSignatureStatus;
   label: string;
 }
+
+// vs code's own outline shield codicons, tinted through theme variables
+const SIGNATURE_ICON: Record<HoverSignatureStatus, { icon: string; color: string }> = {
+  verified: { icon: "workspace-trusted", color: "var(--vscode-textLink-foreground)" },
+  unverified: { icon: "shield", color: "var(--vscode-descriptionForeground)" },
+  bad: { icon: "workspace-untrusted", color: "var(--vscode-errorForeground)" },
+};
 
 export interface HoverModel {
   author: string;
@@ -99,7 +108,7 @@ function authorLine(model: HoverModel): string {
   const url = model.authorUrl && PROFILE_URL_RE.test(model.authorUrl) ? model.authorUrl : undefined;
   const linked = url ? `[${name}](${url} "Open profile")` : name;
   const badge = model.signature
-    ? ` <img src="${model.signature.badgeSrc}" width="14" height="14" title="${attr(model.signature.label)}">`
+    ? ` <span style="color:${SIGNATURE_ICON[model.signature.status].color};" title="${attr(model.signature.label)}">$(${SIGNATURE_ICON[model.signature.status].icon})</span>`
     : "";
   return [`<strong>${linked}</strong>${badge}`, model.ago, safeText(model.date)].join(
     " &nbsp;·&nbsp; ",
@@ -168,7 +177,11 @@ function actionRow(model: HoverModel): string {
   return groups.join(BAR);
 }
 
-export function renderDetails(model: HoverModel): string {
+export interface DetailsOptions {
+  showStat?: boolean;
+}
+
+export function renderDetails(model: HoverModel, opts: DetailsOptions = {}): string {
   if (model.isUncommitted) {
     const actions = [
       link(
@@ -189,7 +202,7 @@ export function renderDetails(model: HoverModel): string {
   const line1 = authorLine(model);
   const line2 = safeText(model.summary);
   const body = model.body ? [model.body.split("\n").map(safeText).join("<br>")] : [];
-  const stat = model.stat ? [statLine(model.stat)] : [];
+  const stat = opts.showStat && model.stat ? [statLine(model.stat)] : [];
   return [header(model, line1, line2), ...body, ...stat, "---", actionRow(model)].join("\n\n");
 }
 

@@ -55,8 +55,9 @@ describe("renderDetails", () => {
     expect(renderDetails(model)).not.toContain("Open on");
   });
 
-  test("stat line colors insertions and deletions", () => {
-    const out = renderDetails(model);
+  test("stat line only when asked for, colored", () => {
+    expect(renderDetails(model)).not.toContain("files changed");
+    const out = renderDetails(model, { showStat: true });
     expect(out).toContain("51 files changed, ");
     expect(out).toContain(
       '<span style="color:var(--vscode-gitDecoration-addedResourceForeground);">5675 insertions(+)</span>',
@@ -93,13 +94,19 @@ describe("renderDetails", () => {
     const out = renderDetails({
       ...model,
       authorUrl: "https://github.com/umut",
-      signature: { badgeSrc: "data:image/png;base64,BBBB", label: 'Signed by "Umut", verified' },
+      signature: { status: "verified", label: 'Signed by "Umut", verified' },
     });
     expect(out).toContain(
       '<strong>[Umut Topalak](https://github.com/umut "Open profile")</strong>',
     );
     expect(out).toContain(
-      '<img src="data:image/png;base64,BBBB" width="14" height="14" title="Signed by &quot;Umut&quot;, verified">',
+      '<span style="color:var(--vscode-textLink-foreground);" title="Signed by &quot;Umut&quot;, verified">$(workspace-trusted)</span>',
+    );
+    expect(
+      renderDetails({ ...model, signature: { status: "bad", label: "Bad signature" } }),
+    ).toContain("$(workspace-untrusted)");
+    expect(renderDetails({ ...model, signature: { status: "unverified", label: "x" } })).toContain(
+      "$(shield)",
     );
   });
 

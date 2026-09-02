@@ -2,7 +2,6 @@ import * as vscode from "vscode";
 import type { AvatarInfo } from "../avatarCache";
 import type { LineTarget } from "../commands/lineActions";
 import { getConfig } from "../config";
-import { signatureBadgeUri } from "../core/badge";
 import type { LineBlame } from "../core/blame";
 import { messageBody } from "../core/gitLog";
 import { templateValuesFor } from "../core/render";
@@ -112,10 +111,7 @@ export function modelFor(
   return {
     author: values.author,
     authorUrl: avatar?.profileUrl,
-    signature: info.signature && {
-      badgeSrc: signatureBadgeUri(info.signature.status),
-      label: info.signature.label,
-    },
+    signature: info.signature && { status: info.signature.status, label: info.signature.label },
     ago: values.ago,
     date: values.date,
     summary: found.commit.summary,

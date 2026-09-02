@@ -1,5 +1,4 @@
 import { describe, expect, test } from "bun:test";
-import { signatureBadgeUri } from "../src/core/badge";
 import { parseSignature } from "../src/core/signature";
 
 describe("parseSignature", () => {
@@ -18,15 +17,5 @@ describe("parseSignature", () => {
   test("unsigned commits have no badge", () => {
     expect(parseSignature("N", "", "")).toBeUndefined();
     expect(parseSignature("", "", "")).toBeUndefined();
-  });
-});
-
-describe("signatureBadgeUri", () => {
-  test("renders distinct cached png badges", () => {
-    const verified = signatureBadgeUri("verified");
-    expect(verified.startsWith("data:image/png;base64,")).toBe(true);
-    expect(signatureBadgeUri("verified")).toBe(verified);
-    expect(signatureBadgeUri("bad")).not.toBe(verified);
-    expect(signatureBadgeUri("unverified")).not.toBe(verified);
   });
 });

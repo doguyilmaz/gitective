@@ -244,7 +244,9 @@ export class BlameHud implements vscode.Disposable {
         this.services.remotes.remoteFor(ctx.req.repoRoot),
       ]);
       if (seq !== this.statusSeq) return;
-      this.statusItem.tooltip = trusted(renderDetails(modelFor(ctx, found, info, avatar, remote)));
+      this.statusItem.tooltip = trusted(
+        renderDetails(modelFor(ctx, found, info, avatar, remote), { showStat: true }),
+      );
     } catch (error) {
       log().warn(`status tooltip: ${error instanceof Error ? error.message : String(error)}`);
     }
