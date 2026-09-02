@@ -6,7 +6,7 @@ import UniformTypeIdentifiers
 // Renders media/icon.png with Core Graphics so the repository carries generated
 // art, not hand-made binaries. Run from the package root:
 //
-//   swift scripts/icon.swift            # media/icon.png (512 px)
+//   swift scripts/icon.swift            # media/icon.png (256 px)
 //   swift scripts/icon.swift --sheet    # also a legibility sheet at 16–256 px
 //
 // The mark: a fingerprint whose ridges are git-style commit arcs, with the
@@ -159,7 +159,7 @@ func writePNG(_ image: CGImage, to url: URL) {
 let root = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
 let media = root.appendingPathComponent("media")
 try FileManager.default.createDirectory(at: media, withIntermediateDirectories: true)
-writePNG(drawIcon(size: 512), to: media.appendingPathComponent("icon.png"))
+writePNG(drawIcon(size: 256), to: media.appendingPathComponent("icon.png"))
 print("==> wrote media/icon.png")
 
 if CommandLine.arguments.contains("--sheet") {
