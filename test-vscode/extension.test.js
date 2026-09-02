@@ -42,7 +42,7 @@ const COMMANDS = [
 
 suite("whodunit", () => {
   test("activates and registers every command", async () => {
-    const extension = vscode.extensions.getExtension("doguyilmaz.whodunit");
+    const extension = vscode.extensions.getExtension("doguyilmaz.whodunit-blame");
     assert.ok(extension, "extension not found by id");
     await extension.activate();
     const commands = await vscode.commands.getCommands(true);
@@ -194,7 +194,7 @@ suite("whodunit", () => {
   });
 
   test("contributes the default keybindings", () => {
-    const extension = vscode.extensions.getExtension("doguyilmaz.whodunit");
+    const extension = vscode.extensions.getExtension("doguyilmaz.whodunit-blame");
     const keys = extension.packageJSON.contributes.keybindings.map((k) => `${k.command}=${k.key}`);
     assert.ok(keys.includes("whodunit.commitMenu=alt+shift+b"));
     assert.ok(keys.includes("whodunit.lineHistory=alt+shift+h"));
