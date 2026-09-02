@@ -1,3 +1,4 @@
+import type * as vscode from "vscode";
 import type { AvatarDiskCache } from "./avatarCache";
 import type { BlameService } from "./git/blameService";
 import type { RemoteResolver } from "./git/remotes";
@@ -8,4 +9,5 @@ export interface Services {
   blame: BlameService;
   remotes: RemoteResolver;
   avatarCache: AvatarDiskCache;
+  globalState: vscode.Memento;
 }

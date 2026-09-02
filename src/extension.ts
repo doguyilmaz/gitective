@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import * as vscode from "vscode";
 import { AvatarDiskCache } from "./avatarCache";
+import { nudgeBuiltinBlame } from "./builtinBlame";
 import { registerCommands } from "./commands";
 import { BlameService } from "./git/blameService";
 import { RemoteResolver } from "./git/remotes";
@@ -34,6 +35,7 @@ export function activate(context: vscode.ExtensionContext): void {
     blame,
     remotes: new RemoteResolver(),
     avatarCache: new AvatarDiskCache(join(context.globalStorageUri.fsPath, "avatars")),
+    globalState: context.globalState,
   };
   const applyBlameOptions = () => {
     const cfg = getConfig();
@@ -80,6 +82,9 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   void checkGitAvailable();
+  void nudgeBuiltinBlame(context.globalState).catch((error) =>
+    log().warn(`builtin blame nudge: ${error instanceof Error ? error.message : String(error)}`),
+  );
 }
 
 async function checkGitAvailable(): Promise<void> {

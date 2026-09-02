@@ -17,8 +17,15 @@ export interface HoverLinks {
   menu: string;
 }
 
+export interface HoverSignature {
+  badgeSrc: string;
+  label: string;
+}
+
 export interface HoverModel {
   author: string;
+  authorUrl?: string;
+  signature?: HoverSignature;
   ago: string;
   date: string;
   summary: string;
@@ -71,6 +78,21 @@ export function avatarBlock(src: string, line1: string, line2: string): string {
   ].join("");
 }
 
+function attr(text: string): string {
+  return text.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+}
+
+function authorLine(model: HoverModel): string {
+  const name = safeText(model.author);
+  const linked = model.authorUrl ? `[${name}](${model.authorUrl} "Open profile")` : name;
+  const badge = model.signature
+    ? ` <img src="${model.signature.badgeSrc}" width="14" height="14" title="${attr(model.signature.label)}">`
+    : "";
+  return [`<strong>${linked}</strong>${badge}`, model.ago, safeText(model.date)].join(
+    " &nbsp;·&nbsp; ",
+  );
+}
+
 function header(model: HoverModel, line1: string, line2: string): string {
   return model.avatarSrc ? avatarBlock(model.avatarSrc, line1, line2) : `${line1}<br>${line2}`;
 }
@@ -90,11 +112,7 @@ export function renderDetails(model: HoverModel): string {
     ].join("\n\n");
   }
 
-  const line1 = [
-    `<strong>${safeText(model.author)}</strong>`,
-    model.ago,
-    safeText(model.date),
-  ].join(" &nbsp;·&nbsp; ");
+  const line1 = authorLine(model);
   const line2 = safeText(model.summary);
   const body = model.body ? [model.body.split("\n").map(safeText).join("<br>")] : [];
   const actions = [

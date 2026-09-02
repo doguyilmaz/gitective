@@ -289,7 +289,7 @@
         "id": "whodunit.inlineBlame.age1",
         "description": "Inline blame color for commits under a day (age tint).",
         "defaults": {
-          "dark": "#f0c27a",
+          "dark": "#ffb454",
           "light": "#a8641a",
           "highContrast": "#ffd18a",
           "highContrastLight": "#7a4400"
@@ -299,7 +299,7 @@
         "id": "whodunit.inlineBlame.age2",
         "description": "Inline blame color for commits under a week (age tint).",
         "defaults": {
-          "dark": "#cfae7c",
+          "dark": "#d9a65c",
           "light": "#9a6a2a",
           "highContrast": "#e6c48f",
           "highContrastLight": "#6b4a10"
@@ -309,7 +309,7 @@
         "id": "whodunit.inlineBlame.age3",
         "description": "Inline blame color for commits under a month (age tint).",
         "defaults": {
-          "dark": "#a99c86",
+          "dark": "#a58e63",
           "light": "#8a7455",
           "highContrast": "#cfc0a6",
           "highContrastLight": "#5a4a30"
@@ -329,7 +329,7 @@
         "id": "whodunit.inlineBlame.age5",
         "description": "Inline blame color for commits older (age tint).",
         "defaults": {
-          "dark": "#6e6e72",
+          "dark": "#666a70",
           "light": "#8f8f95",
           "highContrast": "#8f8f95",
           "highContrastLight": "#5a5a60"

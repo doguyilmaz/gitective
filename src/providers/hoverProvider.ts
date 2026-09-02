@@ -1,37 +1,22 @@
 import * as vscode from "vscode";
 import { AvatarService } from "../avatarService";
-import type { LineTarget } from "../commands/lineActions";
 import { getConfig } from "../config";
 import type { LineBlame } from "../core/blame";
 import { lineBlameAt } from "../core/blame";
-import { messageBody } from "../core/gitLog";
 import { hunkForLine, lineAtInHunk, parseUnifiedDiff } from "../core/hunk";
-import { templateValuesFor } from "../core/render";
-import { shortSha } from "../core/sanitize";
-import { parseShortStat, type ShortStat } from "../core/shortstat";
 import type { DocContext } from "../docContext";
 import { contextForDocument } from "../docContext";
 import { GitError, runGit } from "../git/run";
-import { commandUri, renderChanges, renderDetails, type HoverModel } from "../hover/render";
+import { commitInfo, modelFor, trusted } from "../hover/model";
+import { renderChanges, renderDetails } from "../hover/render";
 import { log } from "../log";
 import type { Services } from "../services";
 
-const TRUSTED_COMMANDS = [
-  "whodunit.copySha",
-  "whodunit.compareWithPrevious",
-  "whodunit.compareWithWorking",
-  "whodunit.openAtRevision",
-  "whodunit.fileHistory",
-  "whodunit.lineHistory",
-  "whodunit.commitMenu",
-];
-
-const CACHE_LIMIT = 32;
+const DIFF_CACHE_LIMIT = 32;
 
 interface ResolvedLine {
   ctx: DocContext;
   found: LineBlame;
-  target: LineTarget;
 }
 
 // shared by both hover providers: same gating, same cached blame lookup
@@ -50,22 +35,7 @@ async function resolveLine(
   const blame = await services.blame.getBlame(ctx.req);
   if (!blame || token.isCancellationRequested) return undefined;
   const found = lineBlameAt(blame, position.line + 1);
-  if (!found) return undefined;
-  return {
-    ctx,
-    found,
-    target: {
-      repoRoot: ctx.req.repoRoot,
-      relPath: found.commit.filename || ctx.req.relPath,
-      sha: found.commit.sha,
-      line: found.line.line,
-      origLine: found.line.origLine,
-      ...(found.commit.previous && {
-        previousSha: found.commit.previous.sha,
-        previousPath: found.commit.previous.path,
-      }),
-    },
-  };
+  return found && { ctx, found };
 }
 
 // annotation mode: only the current line, and only past the end of its text
@@ -80,84 +50,6 @@ function overAnnotation(
   if (position.line !== editor.selection.active.line) return false;
   if (!inlineEnabled) return true;
   return position.character >= doc.lineAt(position.line).range.end.character;
-}
-
-interface CommitInfo {
-  body?: string;
-  stat?: ShortStat;
-}
-
-// body and shortstat in one git call, cached per commit
-class CommitInfoCache {
-  private readonly cache = new Map<string, Promise<CommitInfo>>();
-
-  get(repoRoot: string, sha: string): Promise<CommitInfo> {
-    const key = `${repoRoot} ${sha}`;
-    const cached = this.cache.get(key);
-    if (cached) return cached;
-    const promise = runGit(
-      ["show", "--shortstat", "-m", "--first-parent", "--format=%B%x1e", sha],
-      { cwd: repoRoot },
-    ).then(
-      (out) => {
-        const [message = "", rest = ""] = out.split("\x1e");
-        return { body: messageBody(message) || undefined, stat: parseShortStat(rest) };
-      },
-      (error: unknown) => {
-        this.cache.delete(key);
-        if (error instanceof GitError) log().warn(`hover commit info: ${error.message}`);
-        return {};
-      },
-    );
-    this.cache.set(key, promise);
-    while (this.cache.size > CACHE_LIMIT) {
-      const oldest = this.cache.keys().next().value;
-      if (oldest === undefined) break;
-      this.cache.delete(oldest);
-    }
-    return promise;
-  }
-}
-
-const commitInfo = new CommitInfoCache();
-
-function modelFor(resolved: ResolvedLine, info: CommitInfo, avatarSrc?: string): HoverModel {
-  const { ctx, found, target } = resolved;
-  const cfg = getConfig();
-  const values = templateValuesFor(found.commit, {
-    userEmail: ctx.userEmail,
-    maxLength: Number.MAX_SAFE_INTEGER,
-    locale: vscode.env.language,
-    dateStyle: cfg.dateStyle,
-  });
-  return {
-    author: values.author,
-    ago: values.ago,
-    date: values.date,
-    summary: found.commit.summary,
-    body: info.body,
-    shortSha: shortSha(found.commit.sha),
-    previousShortSha: target.previousSha ? shortSha(target.previousSha) : undefined,
-    avatarSrc,
-    isUncommitted: found.commit.isUncommitted,
-    stat: info.stat,
-    links: {
-      copySha: commandUri("whodunit.copySha", target),
-      changes: commandUri("whodunit.compareWithPrevious", target),
-      changesWorking: commandUri("whodunit.compareWithWorking", target),
-      open: commandUri("whodunit.openAtRevision", target),
-      history: commandUri("whodunit.fileHistory", target),
-      lineHistory: commandUri("whodunit.lineHistory", target),
-      menu: commandUri("whodunit.commitMenu", target),
-    },
-  };
-}
-
-function trusted(markdown: string): vscode.MarkdownString {
-  const md = new vscode.MarkdownString(markdown, true);
-  md.isTrusted = { enabledCommands: TRUSTED_COMMANDS };
-  md.supportHtml = true;
-  return md;
 }
 
 export class BlameHoverProvider implements vscode.HoverProvider {
@@ -177,7 +69,7 @@ export class BlameHoverProvider implements vscode.HoverProvider {
     const { ctx, found } = resolved;
     const cfg = getConfig();
 
-    const [avatarSrc, info] = await Promise.all([
+    const [avatar, info] = await Promise.all([
       cfg.hoverAvatars
         ? found.commit.isUncommitted
           ? this.avatars.avatarFor(ctx.userName ?? "You", ctx.userEmail ?? "")
@@ -193,7 +85,7 @@ export class BlameHoverProvider implements vscode.HoverProvider {
     if (token.isCancellationRequested) return undefined;
 
     return new vscode.Hover(
-      trusted(renderDetails(modelFor(resolved, info, avatarSrc))),
+      trusted(renderDetails(modelFor(ctx, found, info, avatar))),
       doc.lineAt(position.line).range,
     );
   }
@@ -223,7 +115,7 @@ export class BlameChangesHoverProvider implements vscode.HoverProvider {
     if (token.isCancellationRequested) return undefined;
 
     return new vscode.Hover(
-      trusted(renderChanges(modelFor(resolved, info), diffLine)),
+      trusted(renderChanges(modelFor(ctx, found, info), diffLine)),
       doc.lineAt(position.line).range,
     );
   }
@@ -250,7 +142,7 @@ export class BlameChangesHoverProvider implements vscode.HoverProvider {
       return undefined;
     });
     this.diffCache.set(key, promise);
-    while (this.diffCache.size > CACHE_LIMIT) {
+    while (this.diffCache.size > DIFF_CACHE_LIMIT) {
       const oldest = this.diffCache.keys().next().value;
       if (oldest === undefined) break;
       this.diffCache.delete(oldest);

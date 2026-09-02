@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { avatarUrlCandidates } from "../src/core/avatarUrl";
+import { avatarUrlCandidates, githubLoginFromEmail } from "../src/core/avatarUrl";
 
 describe("avatarUrlCandidates", () => {
   test("noreply email with id resolves straight to the github id", () => {
@@ -24,5 +24,11 @@ describe("avatarUrlCandidates", () => {
   test("non-emails yield nothing", () => {
     expect(avatarUrlCandidates("")).toEqual([]);
     expect(avatarUrlCandidates("not-an-email")).toEqual([]);
+  });
+
+  test("githubLoginFromEmail reads both noreply forms", () => {
+    expect(githubLoginFromEmail("52458408+doguyilmaz@users.noreply.github.com")).toBe("doguyilmaz");
+    expect(githubLoginFromEmail("doguyilmaz@users.noreply.github.com")).toBe("doguyilmaz");
+    expect(githubLoginFromEmail("dogu@togg.com.tr")).toBeUndefined();
   });
 });

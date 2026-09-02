@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { AvatarService } from "../avatarService";
 import type { WhodunitConfig } from "../config";
 import { getConfig } from "../config";
 import { ageBucket } from "../core/age";
@@ -8,7 +9,10 @@ import { templateValuesFor } from "../core/render";
 import { escapeCodicons } from "../core/sanitize";
 import type { TemplateValues } from "../core/template";
 import { renderTemplate, usesToken } from "../core/template";
+import type { DocContext } from "../docContext";
 import { BLAMEABLE_SCHEMES, contextForDocument } from "../docContext";
+import { commitInfo, modelFor, trusted } from "../hover/model";
+import { commandUri, renderDetails } from "../hover/render";
 import { log } from "../log";
 import type { Services } from "../services";
 
@@ -53,9 +57,12 @@ export class BlameHud implements vscode.Disposable {
   private readonly updateSeq = new WeakMap<vscode.TextEditor, number>();
   private readonly timers = new Map<vscode.TextEditor, ReturnType<typeof setTimeout>>();
   private readonly agoTimer: ReturnType<typeof setInterval>;
+  private readonly avatars: AvatarService;
   private seqCounter = 0;
+  private statusSeq = 0;
 
   constructor(private readonly services: Services) {
+    this.avatars = new AvatarService(services.remotes, services.avatarCache);
     this.statusItem.name = "Whodunit Blame";
     this.statusItem.command = "whodunit.commitMenu";
     this.disposables.push(
@@ -174,7 +181,7 @@ export class BlameHud implements vscode.Disposable {
       this.clearDecoration(editor);
     }
 
-    if (isActive()) this.renderStatus(cfg, values, found);
+    if (isActive()) this.renderStatus(cfg, values, found, ctx);
   }
 
   private paint(editor: vscode.TextEditor, line: number, text: string, bucket: number): void {
@@ -192,7 +199,12 @@ export class BlameHud implements vscode.Disposable {
     this.applied.set(editor, type);
   }
 
-  private renderStatus(cfg: WhodunitConfig, values: TemplateValues, found: LineBlame): void {
+  private renderStatus(
+    cfg: WhodunitConfig,
+    values: TemplateValues,
+    found: LineBlame,
+    ctx: DocContext,
+  ): void {
     if (!cfg.statusBarEnabled) return this.statusItem.hide();
     const safe: TemplateValues = {
       ...values,
@@ -202,9 +214,42 @@ export class BlameHud implements vscode.Disposable {
     };
     this.statusItem.text = renderTemplate(cfg.statusBarFormat, safe);
     this.statusItem.tooltip = found.commit.isUncommitted
-      ? "Uncommitted changes · click for actions"
+      ? "Uncommitted changes · click for the commit menu"
       : `${values.author}, ${values.date}\n${found.commit.summary}\n${found.commit.sha}\n\nClick for the commit menu`;
     this.statusItem.show();
+    void this.decorateStatus(cfg, found, ctx);
+  }
+
+  // the same card as the hover, rendered into the status bar tooltip once the
+  // avatar and commit details are in; a newer line cancels a slower older one
+  private async decorateStatus(
+    cfg: WhodunitConfig,
+    found: LineBlame,
+    ctx: DocContext,
+  ): Promise<void> {
+    const seq = ++this.statusSeq;
+    try {
+      const [avatar, info] = await Promise.all([
+        cfg.hoverAvatars
+          ? found.commit.isUncommitted
+            ? this.avatars.avatarFor(ctx.userName ?? "You", ctx.userEmail ?? "")
+            : this.avatars.avatarFor(found.commit.author, found.commit.authorEmail, {
+                repoRoot: ctx.req.repoRoot,
+                sha: found.commit.sha,
+              })
+          : Promise.resolve(undefined),
+        found.commit.isUncommitted
+          ? Promise.resolve({})
+          : commitInfo.get(ctx.req.repoRoot, found.commit.sha),
+      ]);
+      if (seq !== this.statusSeq) return;
+      const settings = `[Whodunit settings](${commandUri("workbench.action.openSettings", "whodunit")} "Open Whodunit settings")`;
+      this.statusItem.tooltip = trusted(
+        `${renderDetails(modelFor(ctx, found, info, avatar))}\n\n---\n\n${settings}`,
+      );
+    } catch (error) {
+      log().warn(`status tooltip: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 
   private clearDecoration(editor: vscode.TextEditor): void {

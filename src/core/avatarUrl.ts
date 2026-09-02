@@ -3,6 +3,14 @@ import { createHash } from "node:crypto";
 const NOREPLY_ID_RE = /^(\d+)\+[^@]+@users\.noreply\.github\.com$/;
 const NOREPLY_USER_RE = /^([a-z0-9-]+)@users\.noreply\.github\.com$/;
 
+export function githubLoginFromEmail(email: string): string | undefined {
+  const normalized = email.trim().toLowerCase();
+  return (
+    NOREPLY_ID_RE.exec(normalized)?.[0].split("+")[1]?.split("@")[0] ??
+    NOREPLY_USER_RE.exec(normalized)?.[1]
+  );
+}
+
 // ordered by confidence: noreply emails identify the account outright,
 // gravatar 404s on a miss, github's by-email endpoint always answers
 export function avatarUrlCandidates(email: string, size = 64): string[] {

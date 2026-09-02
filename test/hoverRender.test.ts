@@ -53,6 +53,20 @@ describe("renderDetails", () => {
     expect(out).not.toContain("Line history");
   });
 
+  test("author links to a profile and shows a signature badge when known", () => {
+    const out = renderDetails({
+      ...model,
+      authorUrl: "https://github.com/umut",
+      signature: { badgeSrc: "data:image/png;base64,BBBB", label: 'Signed by "Umut", verified' },
+    });
+    expect(out).toContain(
+      '<strong>[Umut Topalak](https://github.com/umut "Open profile")</strong>',
+    );
+    expect(out).toContain(
+      '<img src="data:image/png;base64,BBBB" width="14" height="14" title="Signed by &quot;Umut&quot;, verified">',
+    );
+  });
+
   test("avatar block floats the image when present", () => {
     const out = renderDetails({ ...model, avatarSrc: "data:image/png;base64,AAAA" });
     expect(out).toContain(

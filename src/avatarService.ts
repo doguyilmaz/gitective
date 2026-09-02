@@ -1,9 +1,9 @@
 import * as vscode from "vscode";
 import { avatarDataUri } from "./core/avatar";
-import { avatarUrlCandidates } from "./core/avatarUrl";
+import { avatarUrlCandidates, githubLoginFromEmail } from "./core/avatarUrl";
 import { isValidSha } from "./core/sanitize";
 import { log } from "./log";
-import type { AvatarDiskCache } from "./avatarCache";
+import type { AvatarDiskCache, AvatarInfo } from "./avatarCache";
 import type { RemoteResolver } from "./git/remotes";
 
 const FETCH_TIMEOUT_MS = 2500;
@@ -37,7 +37,7 @@ const FAILURES_BEFORE_TRIP = 3;
 const TRIP_COOLDOWN_MS = 5 * 60 * 1000;
 
 export class AvatarService {
-  private readonly cache = new Map<string, Promise<string>>();
+  private readonly cache = new Map<string, Promise<AvatarInfo>>();
   private failures = 0;
   private trippedUntil = 0;
 
@@ -50,13 +50,13 @@ export class AvatarService {
     return Date.now() < this.trippedUntil;
   }
 
-  avatarFor(name: string, email: string, commit?: CommitRef): Promise<string> {
+  avatarFor(name: string, email: string, commit?: CommitRef): Promise<AvatarInfo> {
     const key = `${name}\n${email}`;
     let cached = this.cache.get(key);
     if (!cached) {
       cached = this.resolve(name, email, commit).then((result) => {
         if (!result.remote) this.cache.delete(key);
-        return result.dataUri;
+        return result.info;
       });
       this.cache.set(key, cached);
       while (this.cache.size > CACHE_LIMIT) {
@@ -73,30 +73,34 @@ export class AvatarService {
     name: string,
     email: string,
     commit?: CommitRef,
-  ): Promise<{ dataUri: string; remote: boolean }> {
+  ): Promise<{ info: AvatarInfo; remote: boolean }> {
     const diskKey = email || name;
     const stored = await this.disk.get(diskKey);
-    if (stored?.fresh) return { dataUri: stored.dataUri, remote: true };
+    if (stored?.fresh) return { info: stored.info, remote: true };
     if (!this.tripped) {
       const fetched = await this.fetchRemote(email, commit);
       if (fetched) {
         void this.disk.set(diskKey, fetched);
-        return { dataUri: fetched, remote: true };
+        return { info: fetched, remote: true };
       }
     }
-    return { dataUri: stored?.dataUri ?? avatarDataUri(name, email), remote: false };
+    return {
+      info: stored?.info ?? { dataUri: avatarDataUri(name, email) },
+      remote: false,
+    };
   }
 
-  private async fetchRemote(email: string, commit?: CommitRef): Promise<string | undefined> {
+  private async fetchRemote(email: string, commit?: CommitRef): Promise<AvatarInfo | undefined> {
     const fromApi = commit && (await this.fromGitHubApi(commit).catch(() => undefined));
     if (fromApi) return fromApi;
+    const login = githubLoginFromEmail(email);
     for (const url of avatarUrlCandidates(email, AVATAR_SIZE)) {
       if (this.tripped) break;
       try {
         const image = await fetchImageAsDataUri(url);
         if (image) {
           this.failures = 0;
-          return image;
+          return { dataUri: image, ...(login && { profileUrl: `https://github.com/${login}` }) };
         }
       } catch {
         this.noteFailure();
@@ -120,7 +124,7 @@ export class AvatarService {
 
   // the GitLens mechanism: the repo's own commits, resolved by the GitHub API,
   // link private commit emails to real accounts; silent session only, no prompt
-  private async fromGitHubApi(commit: CommitRef): Promise<string | undefined> {
+  private async fromGitHubApi(commit: CommitRef): Promise<AvatarInfo | undefined> {
     if (!isValidSha(commit.sha)) return undefined;
     const remote = await this.remotes.remoteFor(commit.repoRoot);
     if (remote?.host !== "github") return undefined;
@@ -149,11 +153,19 @@ export class AvatarService {
     }
     if (!response.ok) return undefined;
     this.failures = 0;
-    const body = (await response.json()) as { author?: { avatar_url?: string } | null };
+    const body = (await response.json()) as {
+      author?: { avatar_url?: string; html_url?: string } | null;
+    };
     const avatarUrl = body.author?.avatar_url;
     if (!avatarUrl || !avatarUrl.startsWith("https://avatars.githubusercontent.com/"))
       return undefined;
     const sized = `${avatarUrl}${avatarUrl.includes("?") ? "&" : "?"}s=${AVATAR_SIZE}`;
-    return fetchImageAsDataUri(sized);
+    const dataUri = await fetchImageAsDataUri(sized);
+    if (!dataUri) return undefined;
+    const profileUrl = body.author?.html_url;
+    return {
+      dataUri,
+      ...(profileUrl && /^https:\/\/github\.com\/[^/]+$/.test(profileUrl) && { profileUrl }),
+    };
   }
 }

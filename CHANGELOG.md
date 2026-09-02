@@ -18,7 +18,10 @@ Whodunit stops mirroring GitLens and takes its own shape.
 - Inline annotation tinted by commit age (five themable colors).
 - Typing-aware refresh: edited lines read as uncommitted immediately; large files re-blame lazily.
 - Keyboard: `alt+shift+b` commit menu, `alt+shift+h` line history, `alt+shift+,` / `.` older / newer revision.
-- Status bar moved right; click opens the commit menu.
+- Status bar moved right; click opens the commit menu; its tooltip is the full hover card with a settings link.
+- Signature badge in the hover (green verified, gray unverifiable, red bad) and author names linked to GitHub profiles when known.
+- One-time offer to switch off VS Code's built-in blame status bar item to avoid duplicates.
+- Age tint palette made clearly readable (amber for today, gold for the week, tan for the month, gray beyond).
 
 ## 0.1.0
 

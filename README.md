@@ -11,9 +11,15 @@ That's the whole extension: 27 KB, zero runtime dependencies.
 
 - **Inline blame** at the end of the current line, tinted by commit age. Unsaved edits show as
   uncommitted immediately, never as a stale commit.
-- **Hover card** on the annotation: avatar, author, dates, the full commit message, then plain
-  actions: `Changes`, `Open file @sha`, `History`, `Line history`, `Commit ⋯`. A second section shows
-  the blamed line's own diff line (copyable on its own) and a `Changes a ↔ b` footer that opens the diff.
+- **Hover card** on the annotation: avatar, author (linked to their GitHub profile when known), a
+  green badge when the commit's signature verifies (gray if the key is unavailable, red if bad),
+  dates, the full commit message, then plain actions: `Changes`, `Open file @sha`, `History`,
+  `Line history`, `Commit ⋯`. A second section shows the blamed line's own diff line (copyable on
+  its own) and a `Changes a ↔ b` footer that opens the diff. "You" means the commit email equals this
+  repo's `user.email`; names are never matched.
+- **Status bar**: `You, 1 month ago` on the right; hover for the same card as the editor hover
+  (plus a settings link), click for the commit menu. VS Code's own built-in blame item shows up next
+  to it since 1.98; Whodunit offers once to turn the built-in one off.
 - **Commit menu** (`alt+shift+b`, status bar click, or `Commit ⋯`): open changes in this file, vs the
   working tree, all changed files, inspect commit; open or copy the commit link on GitHub, GitLab or
   Bitbucket; file and line history; copy SHA or message; and four safe git actions: create branch,
