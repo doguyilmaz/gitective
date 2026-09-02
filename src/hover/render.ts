@@ -9,12 +9,20 @@ export interface HoverStat {
 
 export interface HoverLinks {
   copySha: string;
+  inspect: string;
   changes: string;
   changesWorking: string;
   open: string;
   history: string;
   lineHistory: string;
   menu: string;
+  settings: string;
+}
+
+export interface HoverRemote {
+  label: string;
+  url: string;
+  icon: "github" | "link-external";
 }
 
 export interface HoverSignature {
@@ -35,6 +43,7 @@ export interface HoverModel {
   avatarSrc?: string;
   isUncommitted: boolean;
   stat?: HoverStat;
+  remote?: HoverRemote;
   links: HoverLinks;
 }
 
@@ -101,13 +110,74 @@ function header(model: HoverModel, line1: string, line2: string): string {
   return model.avatarSrc ? avatarBlock(model.avatarSrc, line1, line2) : `${line1}<br>${line2}`;
 }
 
-const GAP = " &nbsp;&nbsp; ";
+const GAP = " &nbsp; ";
+const BAR = " &nbsp;|&nbsp; ";
+const ADDED = "var(--vscode-gitDecoration-addedResourceForeground)";
+const DELETED = "var(--vscode-gitDecoration-deletedResourceForeground)";
+
+function plural(count: number, noun: string): string {
+  return `${count} ${noun}${count === 1 ? "" : "s"}`;
+}
+
+// the built-in blame's stat line, colors via theme variables (the only css
+// the hover sanitizer lets through)
+export function statLine(stat: HoverStat): string {
+  const parts = [plural(stat.files, "file") + " changed"];
+  if (stat.insertions > 0) {
+    parts.push(`<span style="color:${ADDED};">${plural(stat.insertions, "insertion")}(+)</span>`);
+  }
+  if (stat.deletions > 0) {
+    parts.push(`<span style="color:${DELETED};">${plural(stat.deletions, "deletion")}(-)</span>`);
+  }
+  return parts.join(", ");
+}
+
+function actionRow(model: HoverModel): string {
+  const groups: string[] = [
+    [
+      link(`$(git-commit) ${model.shortSha}`, model.links.inspect, "Inspect commit"),
+      link("$(copy)", model.links.copySha, "Copy SHA"),
+    ].join(GAP),
+    [
+      link(
+        "$(diff)",
+        model.links.changes,
+        model.previousShortSha
+          ? `Changes ${model.previousShortSha} ↔ ${model.shortSha}`
+          : `Changes: added in ${model.shortSha}`,
+      ),
+      link("$(history)", model.links.history, "File history"),
+      link("$(list-ordered)", model.links.lineHistory, "Line history"),
+    ].join(GAP),
+  ];
+  if (model.remote) {
+    groups.push(
+      link(
+        `$(${model.remote.icon}) Open on ${model.remote.label}`,
+        model.remote.url,
+        `Open this commit on ${model.remote.label}`,
+      ),
+    );
+  }
+  groups.push(
+    [
+      link("$(ellipsis)", model.links.menu, "Commit menu: files, working tree, git actions"),
+      link("$(gear)", model.links.settings, "Whodunit settings"),
+    ].join(GAP),
+  );
+  return groups.join(BAR);
+}
 
 export function renderDetails(model: HoverModel): string {
   if (model.isUncommitted) {
     const actions = [
-      link("Changes vs HEAD", model.links.changesWorking, "Diff the working file against HEAD"),
-      link("History", model.links.history, "This file's commits"),
+      link(
+        "$(diff) Changes vs HEAD",
+        model.links.changesWorking,
+        "Diff the working file against HEAD",
+      ),
+      link("$(history)", model.links.history, "File history"),
+      link("$(gear)", model.links.settings, "Whodunit settings"),
     ].join(GAP);
     return [
       header(model, "<strong>You</strong>", "<em>uncommitted changes</em>"),
@@ -119,22 +189,8 @@ export function renderDetails(model: HoverModel): string {
   const line1 = authorLine(model);
   const line2 = safeText(model.summary);
   const body = model.body ? [model.body.split("\n").map(safeText).join("<br>")] : [];
-  const actions = [
-    link(`\`${model.shortSha}\``, model.links.copySha, "Copy SHA"),
-    link(
-      "Changes",
-      model.links.changes,
-      model.previousShortSha
-        ? `Diff this file: ${model.previousShortSha} ↔ ${model.shortSha}`
-        : `This file was added in ${model.shortSha}`,
-    ),
-    link(`Open file @${model.shortSha}`, model.links.open, "Read-only snapshot at this commit"),
-    link("History", model.links.history, "This file's commits"),
-    link("Line history", model.links.lineHistory, "Every commit that touched this line"),
-    link("Commit ⋯", model.links.menu, "Files, remote, copy, git actions"),
-  ].join(GAP);
-
-  return [header(model, line1, line2), ...body, "---", actions].join("\n\n");
+  const stat = model.stat ? [statLine(model.stat)] : [];
+  return [header(model, line1, line2), ...body, ...stat, "---", actionRow(model)].join("\n\n");
 }
 
 export function renderChanges(model: HoverModel, diffLine?: string): string {
@@ -143,9 +199,6 @@ export function renderChanges(model: HoverModel, diffLine?: string): string {
   const label = model.previousShortSha
     ? `Changes ${model.previousShortSha} ↔ ${model.shortSha}`
     : `Changes — added in ${model.shortSha}`;
-  const stat = model.stat
-    ? ` · ${model.stat.files} ${model.stat.files === 1 ? "file" : "files"} · +${model.stat.insertions} −${model.stat.deletions}`
-    : "";
-  parts.push(`${link(label, model.links.changes, "Open the side-by-side diff")}${stat}`);
+  parts.push(link(label, model.links.changes, "Open the side-by-side diff"));
   return parts.join("\n\n");
 }

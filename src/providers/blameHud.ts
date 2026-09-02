@@ -12,7 +12,7 @@ import { renderTemplate, usesToken } from "../core/template";
 import type { DocContext } from "../docContext";
 import { BLAMEABLE_SCHEMES, contextForDocument } from "../docContext";
 import { commitInfo, modelFor, trusted } from "../hover/model";
-import { commandUri, renderDetails } from "../hover/render";
+import { renderDetails } from "../hover/render";
 import { log } from "../log";
 import type { Services } from "../services";
 
@@ -52,7 +52,7 @@ export class BlameHud implements vscode.Disposable {
   private readonly statusItem = vscode.window.createStatusBarItem(
     "whodunit.blame",
     vscode.StatusBarAlignment.Right,
-    100,
+    1000,
   );
   private readonly updateSeq = new WeakMap<vscode.TextEditor, number>();
   private readonly timers = new Map<vscode.TextEditor, ReturnType<typeof setTimeout>>();
@@ -229,7 +229,7 @@ export class BlameHud implements vscode.Disposable {
   ): Promise<void> {
     const seq = ++this.statusSeq;
     try {
-      const [avatar, info] = await Promise.all([
+      const [avatar, info, remote] = await Promise.all([
         cfg.hoverAvatars
           ? found.commit.isUncommitted
             ? this.avatars.avatarFor(ctx.userName ?? "You", ctx.userEmail ?? "")
@@ -241,12 +241,10 @@ export class BlameHud implements vscode.Disposable {
         found.commit.isUncommitted
           ? Promise.resolve({})
           : commitInfo.get(ctx.req.repoRoot, found.commit.sha),
+        this.services.remotes.remoteFor(ctx.req.repoRoot),
       ]);
       if (seq !== this.statusSeq) return;
-      const settings = `[Whodunit settings](${commandUri("workbench.action.openSettings", "whodunit")} "Open Whodunit settings")`;
-      this.statusItem.tooltip = trusted(
-        `${renderDetails(modelFor(ctx, found, info, avatar))}\n\n---\n\n${settings}`,
-      );
+      this.statusItem.tooltip = trusted(renderDetails(modelFor(ctx, found, info, avatar, remote)));
     } catch (error) {
       log().warn(`status tooltip: ${error instanceof Error ? error.message : String(error)}`);
     }

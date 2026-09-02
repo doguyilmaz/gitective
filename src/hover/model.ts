@@ -12,6 +12,7 @@ import { parseSignature, type Signature } from "../core/signature";
 import type { DocContext } from "../docContext";
 import { GitError, runGit } from "../git/run";
 import { log } from "../log";
+import { commitUrl, hostLabel, type Remote } from "../core/remote";
 import { commandUri, type HoverModel } from "./render";
 
 export const TRUSTED_COMMANDS = [
@@ -22,6 +23,7 @@ export const TRUSTED_COMMANDS = [
   "whodunit.fileHistory",
   "whodunit.lineHistory",
   "whodunit.commitMenu",
+  "whodunit.inspectCommit",
   "workbench.action.openSettings",
 ];
 
@@ -97,6 +99,7 @@ export function modelFor(
   found: LineBlame,
   info: CommitInfo,
   avatar?: AvatarInfo,
+  remote?: Remote,
 ): HoverModel {
   const cfg = getConfig();
   const target = targetFor(ctx, found);
@@ -122,8 +125,15 @@ export function modelFor(
     avatarSrc: avatar?.dataUri,
     isUncommitted: found.commit.isUncommitted,
     stat: info.stat,
+    remote: remote && {
+      label: hostLabel(remote.host),
+      url: commitUrl(remote, found.commit.sha),
+      icon: remote.host === "github" ? "github" : "link-external",
+    },
     links: {
       copySha: commandUri("whodunit.copySha", target),
+      inspect: commandUri("whodunit.inspectCommit", { repoRoot: target.repoRoot, sha: target.sha }),
+      settings: commandUri("workbench.action.openSettings", "whodunit"),
       changes: commandUri("whodunit.compareWithPrevious", target),
       changesWorking: commandUri("whodunit.compareWithWorking", target),
       open: commandUri("whodunit.openAtRevision", target),

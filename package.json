@@ -199,7 +199,7 @@
         "whodunit.inline.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Show blame for the current line at the end of the line."
+          "markdownDescription": "Show blame for the current line at the end of the line. Replaces VS Code's built-in `git.blame.editorDecoration.enabled`; Whodunit offers once to turn the built-in one off."
         },
         "whodunit.inline.format": {
           "type": "string",
@@ -214,7 +214,7 @@
         "whodunit.hover.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Show the blame hover card."
+          "markdownDescription": "Show the blame hover card (author, message, stat, actions). Richer than the built-in `git.blame` hover."
         },
         "whodunit.hover.trigger": {
           "type": "string",
@@ -238,7 +238,7 @@
         "whodunit.statusBar.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Show blame for the current line in the status bar."
+          "markdownDescription": "Show blame for the current line in the status bar (click opens the commit menu). Replaces VS Code's built-in `git.blame.statusBarItem.enabled`."
         },
         "whodunit.statusBar.format": {
           "type": "string",

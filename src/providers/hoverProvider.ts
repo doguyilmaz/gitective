@@ -69,7 +69,7 @@ export class BlameHoverProvider implements vscode.HoverProvider {
     const { ctx, found } = resolved;
     const cfg = getConfig();
 
-    const [avatar, info] = await Promise.all([
+    const [avatar, info, remote] = await Promise.all([
       cfg.hoverAvatars
         ? found.commit.isUncommitted
           ? this.avatars.avatarFor(ctx.userName ?? "You", ctx.userEmail ?? "")
@@ -81,11 +81,12 @@ export class BlameHoverProvider implements vscode.HoverProvider {
       found.commit.isUncommitted
         ? Promise.resolve({})
         : commitInfo.get(ctx.req.repoRoot, found.commit.sha),
+      this.services.remotes.remoteFor(ctx.req.repoRoot),
     ]);
     if (token.isCancellationRequested) return undefined;
 
     return new vscode.Hover(
-      trusted(renderDetails(modelFor(ctx, found, info, avatar))),
+      trusted(renderDetails(modelFor(ctx, found, info, avatar, remote))),
       doc.lineAt(position.line).range,
     );
   }
