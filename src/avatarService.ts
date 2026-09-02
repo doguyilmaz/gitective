@@ -3,6 +3,7 @@ import { avatarDataUri } from "./core/avatar";
 import { avatarUrlCandidates } from "./core/avatarUrl";
 import { isValidSha } from "./core/sanitize";
 import { log } from "./log";
+import type { AvatarDiskCache } from "./avatarCache";
 import type { RemoteResolver } from "./git/remotes";
 
 const FETCH_TIMEOUT_MS = 2500;
@@ -32,58 +33,31 @@ async function fetchImageAsDataUri(url: string, token?: string): Promise<string 
   return `data:${type};base64,${bytes.toString("base64")}`;
 }
 
-const CONSENT_KEY = "avatars.consent";
 const FAILURES_BEFORE_TRIP = 3;
-
-type Consent = "granted" | "denied";
+const TRIP_COOLDOWN_MS = 5 * 60 * 1000;
 
 export class AvatarService {
   private readonly cache = new Map<string, Promise<string>>();
   private failures = 0;
-  private tripped = false;
-  private asked = false;
+  private trippedUntil = 0;
 
   constructor(
     private readonly remotes: RemoteResolver,
-    private readonly state: vscode.Memento,
+    private readonly disk: AvatarDiskCache,
   ) {}
 
-  consent(): Consent | undefined {
-    return this.state.get<Consent>(CONSENT_KEY);
-  }
-
-  async setConsent(value: Consent | undefined): Promise<void> {
-    await this.state.update(CONSENT_KEY, value);
-    this.cache.clear();
-  }
-
-  // one question per install, asked from the first hover that would have fetched
-  maybeAskConsent(): void {
-    if (this.asked || this.consent() !== undefined) return;
-    this.asked = true;
-    void vscode.window
-      .showInformationMessage(
-        "Whodunit: load author avatars from GitHub and Gravatar? Initials stay local otherwise.",
-        "Load avatars",
-        "Keep initials",
-      )
-      .then((pick) => {
-        if (pick === undefined) {
-          this.asked = false;
-          return;
-        }
-        void this.setConsent(pick === "Load avatars" ? "granted" : "denied");
-      });
+  private get tripped(): boolean {
+    return Date.now() < this.trippedUntil;
   }
 
   avatarFor(name: string, email: string, commit?: CommitRef): Promise<string> {
-    if (this.consent() !== "granted" || this.tripped) {
-      return Promise.resolve(avatarDataUri(name, email));
-    }
     const key = `${name}\n${email}`;
     let cached = this.cache.get(key);
     if (!cached) {
-      cached = this.resolve(name, email, commit);
+      cached = this.resolve(name, email, commit).then((result) => {
+        if (!result.remote) this.cache.delete(key);
+        return result.dataUri;
+      });
       this.cache.set(key, cached);
       while (this.cache.size > CACHE_LIMIT) {
         const oldest = this.cache.keys().next().value;
@@ -94,7 +68,26 @@ export class AvatarService {
     return cached;
   }
 
-  private async resolve(name: string, email: string, commit?: CommitRef): Promise<string> {
+  // memory → fresh disk copy → network → stale disk copy → initials
+  private async resolve(
+    name: string,
+    email: string,
+    commit?: CommitRef,
+  ): Promise<{ dataUri: string; remote: boolean }> {
+    const diskKey = email || name;
+    const stored = await this.disk.get(diskKey);
+    if (stored?.fresh) return { dataUri: stored.dataUri, remote: true };
+    if (!this.tripped) {
+      const fetched = await this.fetchRemote(email, commit);
+      if (fetched) {
+        void this.disk.set(diskKey, fetched);
+        return { dataUri: fetched, remote: true };
+      }
+    }
+    return { dataUri: stored?.dataUri ?? avatarDataUri(name, email), remote: false };
+  }
+
+  private async fetchRemote(email: string, commit?: CommitRef): Promise<string | undefined> {
     const fromApi = commit && (await this.fromGitHubApi(commit).catch(() => undefined));
     if (fromApi) return fromApi;
     for (const url of avatarUrlCandidates(email, AVATAR_SIZE)) {
@@ -109,14 +102,15 @@ export class AvatarService {
         this.noteFailure();
       }
     }
-    return avatarDataUri(name, email);
+    return undefined;
   }
 
   // rate limits and offline machines: stop asking the network for the session
   private trip(reason: string): void {
     if (this.tripped) return;
-    this.tripped = true;
-    log().warn(`avatars: remote lookups paused for this session (${reason})`);
+    this.trippedUntil = Date.now() + TRIP_COOLDOWN_MS;
+    this.failures = 0;
+    log().warn(`avatars: remote lookups paused for five minutes (${reason})`);
   }
 
   private noteFailure(): void {

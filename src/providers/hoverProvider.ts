@@ -164,7 +164,7 @@ export class BlameHoverProvider implements vscode.HoverProvider {
   private readonly avatars: AvatarService;
 
   constructor(private readonly services: Services) {
-    this.avatars = new AvatarService(services.remotes, services.globalState);
+    this.avatars = new AvatarService(services.remotes, services.avatarCache);
   }
 
   async provideHover(
@@ -191,7 +191,6 @@ export class BlameHoverProvider implements vscode.HoverProvider {
         : commitInfo.get(ctx.req.repoRoot, found.commit.sha),
     ]);
     if (token.isCancellationRequested) return undefined;
-    if (cfg.hoverAvatars) this.avatars.maybeAskConsent();
 
     return new vscode.Hover(
       trusted(renderDetails(modelFor(resolved, info, avatarSrc))),

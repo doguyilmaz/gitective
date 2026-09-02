@@ -29,9 +29,10 @@ That's the whole extension: 27 KB, zero runtime dependencies.
 
 ## Privacy
 
-No telemetry. Git runs locally. The only network use is author avatars (GitHub via the repo's
-`origin`, then Gravatar) and only after you say yes to a one-time prompt; say no and you get
-locally generated initials. Set `whodunit.hover.avatars` to `false` to never be asked.
+No telemetry. Git runs locally. The only network use is author avatars: GitHub (via the repo's
+`origin`, reusing an existing VS Code GitHub session, never prompting) then Gravatar. Avatars are
+cached locally for a week, the last cached one is shown offline, and initials are drawn when nothing
+is cached. Set `whodunit.hover.avatars` to `false` and Whodunit never touches the network.
 
 ## Settings
 
@@ -42,7 +43,7 @@ locally generated initials. Set `whodunit.hover.avatars` to `false` to never be 
 | `whodunit.inline.ageTint` | `true` | Tint the annotation by commit age (`whodunit.inlineBlame.age1…age5`) |
 | `whodunit.hover.enabled` | `true` | Blame hover card |
 | `whodunit.hover.trigger` | `annotation` | Card over the inline annotation only, or `line` for any line |
-| `whodunit.hover.avatars` | `true` | Allow avatars (asked once; initials until granted) |
+| `whodunit.hover.avatars` | `true` | Author avatars (GitHub, Gravatar; cached; initials offline) |
 | `whodunit.hover.showChanges` | `true` | The blamed line's own diff line in the hover |
 | `whodunit.statusBar.enabled` | `true` | Status bar blame (click opens the commit menu) |
 | `whodunit.statusBar.format` | `$(git-commit) ${author}, ${ago}` | Status bar template (codicons allowed) |

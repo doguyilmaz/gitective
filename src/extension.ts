@@ -1,4 +1,6 @@
+import { join } from "node:path";
 import * as vscode from "vscode";
+import { AvatarDiskCache } from "./avatarCache";
 import { registerCommands } from "./commands";
 import { BlameService } from "./git/blameService";
 import { RemoteResolver } from "./git/remotes";
@@ -31,7 +33,7 @@ export function activate(context: vscode.ExtensionContext): void {
     resolver: new RepoResolver((info) => watcher.watch(info.root)),
     blame,
     remotes: new RemoteResolver(),
-    globalState: context.globalState,
+    avatarCache: new AvatarDiskCache(join(context.globalStorageUri.fsPath, "avatars")),
   };
   const applyBlameOptions = () => {
     const cfg = getConfig();
@@ -71,9 +73,6 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (!event.affectsConfiguration("whodunit")) return;
       if (event.affectsConfiguration("whodunit.blame")) applyBlameOptions();
-      if (event.affectsConfiguration("whodunit.hover.avatars") && getConfig().hoverAvatars) {
-        void context.globalState.update("avatars.consent", undefined);
-      }
       hud.refresh();
     }),
     // document versions restart on reopen, so a stale entry could match again

@@ -228,7 +228,7 @@
         "whodunit.hover.avatars": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Show the author's avatar in the hover card. Looks up GitHub (via the repo's origin and an existing VS Code GitHub session, never prompting) and Gravatar; falls back to a locally generated initials avatar offline. Turn off to avoid any network use."
+          "markdownDescription": "Show author avatars in the hover card: GitHub (via the repo's `origin`, reusing an existing VS Code GitHub session, never prompting) then Gravatar, cached locally for a week; the last cached avatar is shown offline, initials when nothing is cached. Turn off to keep Whodunit fully local."
         },
         "whodunit.hover.showChanges": {
           "type": "boolean",

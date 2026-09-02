@@ -9,7 +9,7 @@ Whodunit stops mirroring GitLens and takes its own shape.
   search and history picks.
 - Hover card redesigned: avatar beside author and message, plain-word actions, the blamed line's own
   diff line in a copyable block, `Changes a ↔ b` footer with stat. Full commit message body shown.
-- Real avatars: GitHub (via the repo's origin) and Gravatar, after a one-time opt-in; initials otherwise.
+- Real avatars: GitHub (via the repo's origin) and Gravatar, cached locally for a week; the cached avatar shows offline, initials when nothing is cached. `whodunit.hover.avatars: false` keeps everything local.
 - Line history (`git log -L`), Inspect Commit (read-only text view with side-by-side code lenses),
   Changes with Working Tree, Open/Copy commit link for GitHub, GitLab and Bitbucket.
 - Revision tabs are named `file @ sha`, keep syntax highlighting, and carry a tooltip.
